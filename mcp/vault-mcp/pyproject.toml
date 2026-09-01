@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vault-mcp"
+version = "0.1.0"
+description = "A minimal but real MCP server for a Markdown knowledge base"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["mcp", "model-context-protocol", "claude", "knowledge-base", "obsidian", "markdown"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+dependencies = ["mcp>=1.2.0"]
+
+[project.urls]
+Homepage = "https://github.com/icatchstyle/Claude-Code-Memory-Stack"
+Documentation = "https://github.com/icatchstyle/Claude-Code-Memory-Stack/tree/main/docs"
+Issues = "https://github.com/icatchstyle/Claude-Code-Memory-Stack/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+vault-mcp = "vault_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vault_mcp"]

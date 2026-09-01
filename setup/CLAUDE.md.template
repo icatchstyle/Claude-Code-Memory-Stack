@@ -1,0 +1,189 @@
+# Claude — Global user instructions
+
+<!--
+  TEMPLATE. Copy to ~/.claude/CLAUDE.md and edit.
+  Placeholders look like <THIS>. Delete every section you do not actually need —
+  an unused rule is not free, it dilutes the ones that matter.
+
+  THE RULE FOR THIS FILE: it is an INSTRUCTION file, not a KNOWLEDGE file.
+  Facts go in the knowledge base. Only what steers behaviour stays here.
+  Target length: 150-300 lines.
+-->
+
+## Maintaining this file (binding)
+
+This file is kept current proactively — I should not have to ask.
+
+**Allowed without asking:**
+- **Correct facts** that are demonstrably stale (paths, ports, server names, versions, repo
+  locations, tool names) — verify against the real state first, never from memory.
+- **Add new operational knowledge** that belongs here: a new MCP server, a changed workflow,
+  a recurring fix.
+- **Tidy up:** merge duplicates, reduce content to a pointer at its authoritative source
+  (knowledge-base note, `SKILLS/_INDEX.md`, `GUIDELINES/`), remove dead links, shorten.
+
+**Only with my approval:**
+- **Changing, weakening or removing a RULE** — autonomy limits, language rules, access rules.
+  Shortening is housekeeping; changing meaning is my decision.
+
+**Always:** details belong in the knowledge base; only behaviour-steering text stays here.
+Say at the end of the turn what you changed and why.
+
+---
+
+## Knowledge base — the persistent memory
+
+**Base path (the only valid one):** `<VAULT_PATH>`
+
+**Access exclusively through `<ACCESS_METHOD>`.**
+<!-- With an MCP server:  "…through mcp__vault__* — no Read/Edit/Write, no shell fallback." -->
+<!-- Without one:         "…through Read/Grep. Read the folder's _INDEX.md first, then only
+     the notes that matter. Never dump whole folders into context." -->
+
+### Knowledge recall (binding)
+
+The knowledge base is used **proactively and unasked** — I should not have to ask for it.
+
+1. **Before every task** — without exception: a gotcha check with the context (project,
+   technologies, paths) **and** a search with one or two precise terms.
+   **Only these three cases are exempt:**
+   - a pure follow-up about the running conversation (the knowledge is already in context),
+   - a bare confirmation or abort ("yes", "go on", "stop"),
+   - the same search was already run this session for the same question.
+
+   **Do not talk yourself out of it as "trivial".** Questions that sound like general knowledge
+   often have a project-specific answer here (profiles, paths, gotchas, workflows). Missing
+   knowledge leaves no gap in the context that anything notices — so the list above decides,
+   not your intuition.
+2. **Token-efficient:** search first, then read only the relevant hits. Never dump whole folders
+   or `_INDEX.md` files. Use `MAP.md` only to orient in an unfamiliar project.
+3. **Snippets before writing your own:** search `GLOBAL/snippets/`; binding conventions live in
+   `GUIDELINES/`.
+4. **Write back:** put new insights, decisions and gotchas into the knowledge base actively.
+5. **Never block:** if the search finds nothing, carry on normally. Recall is an accelerator,
+   not a gate.
+
+### Write rules (binding)
+
+- **Gotchas** always start with a `> [!severity] Title` callout (`danger`/`warning`/`tip`/`info`)
+  — without it they are **invisible** to gotcha retrieval. Store them under
+  `GLOBAL/gotchas/<tech>/` or `PROJECTS/<project>/gotchas/`.
+- **Link hygiene:** no piped wikilinks inside table cells — the parser breaks them. Write
+  navigation links as a bullet list: `- [[path|alias]] — description`.
+- **New notes** are created from `TEMPLATES/` and linked into the folder's `_INDEX.md`.
+- **Frontmatter date key** is uniformly `date:` — never a second spelling.
+- **Before deleting**, check backlinks.
+- **Navigation:** entry point is `HOME.md`, cross-project dependencies are in `MAP.md`.
+
+---
+
+## MCP servers
+
+<!-- Delete this whole section if you use none. -->
+
+| Server | Purpose | Operation |
+|---|---|---|
+| `vault` | Knowledge base (see above) | `<PATH>` — HTTP daemon `http://127.0.0.1:8765/mcp` |
+| `<tracker>` | Tickets + wiki | `<PATH>` — HTTP daemon |
+| `<db>` | Databases | `<PATH>` — stdio |
+| `<git>` | Git / forge workflow | `<PATH>` — stdio |
+
+**Daemon architecture:** exactly **one** long-lived container per server for all Claude instances
+(one process = no lock collisions). Started via `<repo>/scripts/ensure-up.sh`, idempotent, wired
+as a `SessionStart` hook.
+
+**Careful:** the daemons run via `docker run` from `ensure-up.sh` — a `docker-compose.yml` in the
+repo is **not** what is running. Changes to mounts/envs go into `ensure-up.sh` and only take
+effect after `docker rm -f <name>` plus a fresh `ensure-up.sh`, because the script does not
+recreate a running container.
+
+**Self-healing — orphaned mount.**
+*Symptom:* the server reports zero notes, a full re-index inserts nothing, reads of notes that
+demonstrably exist return "not found" — while the server is healthy.
+*Cause:* the bind mount survived a host-side re-sync and points at nothing.
+*Fix, to be applied without asking* when the symptoms match:
+
+```bash
+docker exec <server> sh -c 'ls /vault | wc -l'   # 0 = orphaned
+ls "<VAULT_PATH>" | wc -l                        # >0 = host is fine
+docker restart <server> && sleep 4               # ensure-up.sh is NOT enough
+```
+
+Verify afterwards with a re-index and a status check. If `/vault` is still empty, escalate to me.
+
+---
+
+## Git behaviour (binding)
+
+**Branch base:** a new branch is **always** created from `<DEFAULT_BRANCH>` — never from a
+release or staging branch. Exception only with a reason: branching off a feature branch that is
+being built upon. Check which branch the repo is on before creating, and set the base explicitly
+instead of branching off HEAD.
+
+**Autonomy limits — only on an explicit request:**
+`git commit` · `git merge` · `git push` · `git pull` · creating or merging a PR/MR.
+
+**Exception for pull:** if a pull is requested, resolve any resulting merge conflict
+independently (analyse, merge sensibly, finish the commit) — no further question needed.
+
+**Stage what you create:** any file you add in a repository that belongs to the project (code,
+docs, config, scripts) is staged unprompted. Excluded: scratch files and anything `.gitignore`
+covers.
+
+---
+
+## Code comments (binding, all projects)
+
+- **Always English** — inline, block, docblocks. Also in a non-English conversation and
+  surrounded by non-English legacy code. **Do not match the surroundings — this rule wins.**
+- **Comment sparingly:** only for complicated code, or where the information must live at that
+  spot (a why-decision, a workaround, a business rule, a pitfall, a ticket reference). No comments
+  that restate the line below them.
+  **Comments explain WHY; the code shows WHAT.**
+- **Hard limit: 2 lines per comment.** Longer means it is narrative — mechanism, consequences,
+  how the bug happened — and that belongs in the commit message, the PR, or the knowledge base.
+  Test before writing: *would this same sentence go in the commit message?* If yes, put it there.
+- **TODOs:** a space before *and* after the keyword so the IDE flags it: `// todo handle timeout`.
+
+Applies to **code comments only** — not to text written in my name, and not to Markdown docs.
+
+---
+
+## Parallel execution — opt-in keyword
+
+If I say **"<KEYWORD>"**, that is explicit permission to use several subagents and/or multi-stage
+orchestration — **only if** it genuinely speeds up or improves the task, otherwise work serially
+with a one-line reason. It is a permission, not an obligation.
+
+---
+
+## Skills — managed in the knowledge base
+
+**Active location:** `~/.claude/skills/<name>/SKILL.md`
+**Source of truth:** `SKILLS/<category>/<name>.md` in the knowledge base.
+
+1. **New skills are created in the knowledge base first** — never directly in the skills folder.
+2. **Categorise** into a thematic subfolder (`analysis/`, `ops/`, `communication/`, `tools/`).
+3. **The active location holds only a symlink** — never a standalone copy, or the source of truth
+   drifts. File symlink for single-file skills, directory symlink for skills with
+   `references/`/`scripts/`/`assets/`.
+4. **Edit the source file** — the symlink loads live, no restart needed.
+
+Full overview and the exact `ln -sfn` commands: `SKILLS/_INDEX.md`.
+
+---
+
+## <YOUR SECTION>
+
+<!--
+  Add what is specific to you. Good candidates:
+  - Session naming conventions
+  - Which environments are off limits
+  - Preferred tools for recurring tasks
+  - Communication style for anything written in your name
+
+  Bad candidates (these belong in the knowledge base):
+  - Lists of hosts, URLs, accounts, database profiles
+  - Architecture descriptions
+  - Step-by-step procedures  ->  make them a skill
+-->

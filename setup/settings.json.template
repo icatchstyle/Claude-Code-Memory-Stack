@@ -1,0 +1,82 @@
+{
+  "_comment": "TEMPLATE for ~/.claude/settings.json. Replace <VAULT_PATH> and <MCP_REPO> everywhere, then delete every _comment key — JSON has no comments and Claude Code ignores unknown keys, but they only add noise.",
+
+  "_comment_permissions": "additionalDirectories lets Claude reach the vault at all when it sits outside your working directory. The allow list removes prompts for things you always approve anyway.",
+  "permissions": {
+    "defaultMode": "auto",
+    "additionalDirectories": [
+      "<VAULT_PATH>"
+    ],
+    "allow": [
+      "Read(<VAULT_PATH>/**)",
+      "Edit(<VAULT_PATH>/**)",
+      "mcp__vault"
+    ]
+  },
+
+  "_comment_hooks": "SessionStart brings the MCP daemons up. The vault daemon is BLOCKING because the first prompt already needs it; everything else is backgrounded with nohup so session start stays fast. UserPromptSubmit re-injects the recall obligation every turn — this is the highest-value hook in the set.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "<MCP_REPO>/vault-mcp/scripts/ensure-up.sh >/tmp/vault-mcp-ensure-up.log 2>&1"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/memory-recall-reminder.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/session-name-ticket.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/notify.sh done"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/notify.sh input-needed"
+          }
+        ]
+      }
+    ]
+  },
+
+  "_comment_statusline": "Optional. Any command that prints one line.",
+  "statusLine": {
+    "type": "command",
+    "command": "echo \"$(basename $PWD) | $(git branch --show-current 2>/dev/null || echo -)\"",
+    "padding": 0
+  },
+
+  "_comment_model": "Set explicitly so behaviour does not shift under you when defaults change.",
+  "model": "opus",
+
+  "_comment_language": "Language of the conversation. Code comments are governed separately by CLAUDE.md.",
+  "language": "English",
+
+  "_comment_plugins": "Enable deliberately. Every enabled plugin adds skills and tool descriptions to your context on every session — a long list is a real cost, not a free option.",
+  "enabledPlugins": {}
+}
