@@ -10,8 +10,9 @@ help: ## Show this help
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: test
-test: ## Run the reference server's tests
+test: ## Run both reference servers' tests
 	cd mcp/vault-mcp && pytest tests/ -v
+	cd mcp/sqlite-mcp && pytest tests/ -v
 
 .PHONY: links
 links: ## Verify every relative Markdown link resolves

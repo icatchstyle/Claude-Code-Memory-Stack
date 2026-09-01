@@ -142,7 +142,9 @@ what turns "notes about problems" into a warning system.
 │   ├── GLOBAL/ PROJECTS/ …       the folder taxonomy, each with an _INDEX.md
 │   ├── SKILLS/                   two annotated example skills, where the docs say they belong
 │   └── TEMPLATES/                note templates (gotcha, project, ADR, skill, …)
-└── mcp/vault-mcp/                ← a minimal but real MCP server for the vault
+└── mcp/                          ← two small but real MCP servers
+    ├── vault-mcp/                structured retrieval over the vault
+    └── sqlite-mcp/               guardrails enforced in code, not in a prompt
 ```
 
 ---

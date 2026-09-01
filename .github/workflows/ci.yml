@@ -33,8 +33,12 @@ jobs:
       - name: Install pytest
         run: python -m pip install --upgrade pip pytest
 
-      - name: Run tests
+      - name: Run tests — vault-mcp
         working-directory: mcp/vault-mcp
+        run: pytest tests/ -v
+
+      - name: Run tests — sqlite-mcp
+        working-directory: mcp/sqlite-mcp
         run: pytest tests/ -v
 
   package:
@@ -45,11 +49,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install the server
+      - name: Install vault-mcp
         working-directory: mcp/vault-mcp
-        run: python -m pip install --upgrade pip . 
+        run: python -m pip install --upgrade pip .
+      - name: Install sqlite-mcp
+        working-directory: mcp/sqlite-mcp
+        run: python -m pip install .
       - name: Import check
-        run: python -c "import vault_mcp; print(vault_mcp.__version__)"
+        run: |
+          python -c "import vault_mcp; print('vault-mcp', vault_mcp.__version__)"
+          python -c "import sqlite_mcp; print('sqlite-mcp', sqlite_mcp.__version__)"
 
   shell:
     name: Shell scripts

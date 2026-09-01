@@ -133,6 +133,16 @@ pattern rather than everything you might want:
 `gotcha_check` is the one that changes daily life: it turns "notes about problems" into a warning
 system that fires *before* the mistake.
 
+### The second server: guardrails in code
+
+[`mcp/sqlite-mcp/`](../mcp/sqlite-mcp/) exists to prove the claim this chapter opens with. It
+implements named profiles where read-only is enforced **twice, independently**: mutating
+statements are refused after comments are stripped, and a read-only profile opens the database in
+SQLite's own read-only mode, so even a statement that slipped past the first check cannot write.
+
+One guard is a rule. Two independent guards is a property — and a property is what you want
+between an agent and your production data.
+
 ## Running without an MCP server
 
 The design degrades gracefully. Without a server, Claude reads the vault with `Read`, `Glob` and

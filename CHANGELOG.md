@@ -9,6 +9,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`mcp/sqlite-mcp/`** — a second reference server demonstrating guardrails enforced in code:
+  named profiles where read-only is checked twice, independently (statement inspection after
+  comment stripping, plus SQLite's own read-only mode), bounded output, and errors that name the
+  next step. It exists to prove the central claim of `docs/05-mcp.md`, which was previously
+  asserted but not demonstrated.
+- **Two more example skills** — `vault-lint`, the maintenance counterpart to `capture-knowledge`,
+  and `multi`, the opt-in keyword for parallel execution. Both were described in the
+  documentation without being shipped.
 - Dependabot version updates for GitHub Actions and the reference server's Python dependencies,
   grouped into one pull request per ecosystem and scheduled monthly.
 

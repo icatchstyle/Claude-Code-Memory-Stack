@@ -61,7 +61,13 @@ actually is.
 Start with the two highest-value ones for almost everyone:
 
 - **A write-back skill** — end a session by capturing what was durable. This closes the loop.
-- **Your delivery procedure** — whatever "ship this" means in your world.
+  A worked example ships with this template:
+  [`capture-knowledge`](../vault-template/SKILLS/ops/capture-knowledge.md).
+- **A maintenance skill** — the counterpart that keeps the result findable. Also included:
+  [`vault-lint`](../vault-template/SKILLS/ops/vault-lint.md).
+- **Your delivery procedure** — whatever "ship this" means in your world. This one you write
+  yourself, and deliberately so: branching models, review conventions and ticket systems differ
+  too much for a generic version to be anything but wrong or vacuous.
 
 Put them in `SKILLS/` in the vault, symlink them, and keep `SKILLS/_INDEX.md` current.
 
