@@ -30,7 +30,7 @@ Documentation = "https://github.com/icatchstyle/Claude-Code-Memory-Stack/tree/ma
 Issues = "https://github.com/icatchstyle/Claude-Code-Memory-Stack/issues"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=9.1.1"]
 
 [project.scripts]
 vault-mcp = "vault_mcp.server:main"
