@@ -1,0 +1,33 @@
+# Dependabot version updates.
+#
+# This is separate from Dependabot *alerts*, which are enabled in the repository settings and
+# report known vulnerabilities without needing this file. What is configured here are the
+# scheduled pull requests that keep pinned versions current.
+#
+# The GitHub Actions ecosystem is the one that matters for this repository: action tags go stale
+# silently, and a workflow pinned to a year-old action is both a maintenance and a supply-chain
+# concern. The Python side has one runtime dependency, declared with a floor rather than a pin,
+# so its updates are informational.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
+    labels: [dependencies, ci]
+    groups:
+      # One pull request for all action bumps instead of one per action.
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directory: /mcp/vault-mcp
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps"
+    labels: [dependencies, python]
+    open-pull-requests-limit: 3

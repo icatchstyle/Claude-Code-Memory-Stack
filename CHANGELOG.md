@@ -7,6 +7,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Dependabot version updates for GitHub Actions and the reference server's Python dependencies,
+  grouped into one pull request per ecosystem and scheduled monthly.
+
 ## [0.1.0] — 2026-09-01
 
 First public release.
