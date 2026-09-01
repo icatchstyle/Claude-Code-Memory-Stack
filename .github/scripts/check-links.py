@@ -18,9 +18,10 @@ from pathlib import Path
 
 LINK = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 SKIP_PREFIXES = ("http://", "https://", "mailto:", "#")
-# The vault template uses Obsidian wikilinks, which the reference server checks instead —
-# see the `vault` job in CI.
-SKIP_DIRS = {".git", "vault-template"}
+# Wikilinks in the vault template are checked by the `vault` job instead; relative Markdown
+# links there are checked here like everywhere else, because a template that is copied out of
+# the repository takes its broken links with it.
+SKIP_DIRS = {".git"}
 
 
 def main() -> int:

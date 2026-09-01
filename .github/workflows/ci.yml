@@ -61,10 +61,16 @@ jobs:
       - name: Install sqlite-mcp
         working-directory: mcp/sqlite-mcp
         run: python -m pip install .
+      # Importing the SERVER modules, not just the packages: a typo in an @mcp.tool() signature
+      # or a breaking change in the MCP SDK only shows up here.
       - name: Import check
+        env:
+          VAULT_PATH: vault-template
         run: |
           python -c "import vault_mcp; print('vault-mcp', vault_mcp.__version__)"
           python -c "import sqlite_mcp; print('sqlite-mcp', sqlite_mcp.__version__)"
+          python -c "import vault_mcp.server; print('vault-mcp server ok')"
+          SQLITE_MCP_PROFILES="demo=:memory::ro" python -c "import sqlite_mcp.server; print('sqlite-mcp server ok')"
 
   shell:
     name: Shell scripts
@@ -96,7 +102,8 @@ jobs:
       - name: ShellCheck
         run: |
           shellcheck --version
-          find . -name '*.sh' -print0 | xargs -0 shellcheck --severity=warning
+          find . -name '*.sh' -not -path './.git/*' -print0 \
+            | xargs -0 shellcheck --severity=warning
 
   docs:
     name: Documentation links resolve
@@ -146,6 +153,27 @@ jobs:
         run: |
           ./setup/bootstrap.sh --vault /tmp/v --claude-dir /tmp/c | tee out.txt
           grep -q 'skip' out.txt
+
+      # The harvest runner is exercised end to end like bootstrap.sh, against a transcript
+      # directory built for the purpose. Its default must stay dry run.
+      - name: Harvest runner dry-runs against a synthetic transcript
+        run: |
+          mkdir -p /tmp/proj/sample
+          cp automation/tests/fixtures/session-sample.jsonl /tmp/proj/sample/abc.jsonl
+          MINER_STATE_DIR=/tmp/miner MINER_PROJECTS_DIR=/tmp/proj \
+            ./automation/run.sh --since-days 100000 2>&1 | tee /tmp/run.out
+          grep -q 'DRY RUN' /tmp/run.out || { echo "default is not a dry run"; exit 1; }
+          test ! -f /tmp/miner/last-run || { echo "state advanced during a dry run"; exit 1; }
+
+      - name: Collector honours the cut marker
+        run: |
+          mkdir -p /tmp/proj2/sample
+          cp automation/tests/fixtures/session-cut.jsonl /tmp/proj2/sample/cut.jsonl
+          python3 automation/collect_sessions.py --out /tmp/dig --projects-dir /tmp/proj2 \
+            --since-days 100000
+          grep -q 'already handled' /tmp/dig/cut.md
+          grep -q 'new work after the cut' /tmp/dig/cut.md
+          ! grep -q 'old work' /tmp/dig/cut.md
 
       - name: Recall hook emits context, and stays silent on acknowledgements
         run: |

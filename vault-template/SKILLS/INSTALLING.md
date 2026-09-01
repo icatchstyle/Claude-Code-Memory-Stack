@@ -45,7 +45,7 @@ If a skill's scripts are invoked from **outside** the agent — a scheduler call
 path — keep those scripts local and symlink only the `SKILL.md`. External callers should not depend
 on your vault being mounted.
 
-## The two example skills
+## The example skills
 
 - [[SKILLS/ops/capture-knowledge|capture-knowledge]] — single file, tightly scoped description
 - [[SKILLS/ops/vault-lint|vault-lint]] — single file, the maintenance counterpart

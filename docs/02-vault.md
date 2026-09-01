@@ -3,7 +3,7 @@
 The vault is a folder of Markdown files. That is the whole technology. Everything useful about it
 comes from **conventions**, not features — which is why it survives tool changes.
 
-**In this chapter:** [Folder taxonomy](#folder-taxonomy) · [Naming](#naming) · [Frontmatter](#frontmatter) · [Gotchas: the one convention that pays for itself](#gotchas-the-one-convention-that-pays-for-itself) · [Problem](#problem) · [Cause](#cause) · [Fix](#fix) · [Prevention](#prevention) · [Linking](#linking) · [Note templates](#note-templates) · [What does *not* belong in the vault](#what-does-not-belong-in-the-vault) · [Sizing expectations](#sizing-expectations)
+**In this chapter:** [Folder taxonomy](#folder-taxonomy) · [Naming](#naming) · [Frontmatter](#frontmatter) · [Gotchas: the one convention that pays for itself](#gotchas-the-one-convention-that-pays-for-itself) · [Linking](#linking) · [Note templates](#note-templates) · [What does *not* belong in the vault](#what-does-not-belong-in-the-vault) · [Sizing expectations](#sizing-expectations)
 
 ## Folder taxonomy
 

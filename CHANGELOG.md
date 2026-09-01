@@ -34,6 +34,32 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Path traversal in `Vault.resolve`.** It compared path strings by prefix, so a sibling
+  directory got through: for a vault at `/data/vault`, `../vault-secrets/x.md` resolved to
+  `/data/vault-secrets/x.md`, which starts with the vault's path and was accepted — readable and
+  writable, since `create_note` and `update_note` go through the same function. Now compared as
+  paths, with the sibling case covered by a test.
+- **The cron example shipped `--write`**, contradicting its own comment and the documentation's
+  claim that all three schedules start in dry run. An unattended agent would have had write
+  access on day one.
+- **The harvest run granted no write permission and still reported success.** Headless runs have
+  nobody to answer a permission prompt, so writes were refused while the marker still appeared
+  and the state advanced — losing the window silently. The permission mode is now explicit, and a
+  reported write is verified against the vault when it is a git repository.
+- `gotcha_check` returned navigational callouts from indexes and entry points as if they were
+  warnings, and callout extraction was not code-aware.
+- `make check` did not run ShellCheck although CI does, breaking the guarantee that a green local
+  run predicts a green pipeline — the same drift the shared vault check was introduced to end.
+- SQLite connections were committed but never closed, leaking a descriptor per query in exactly
+  the long-lived daemon this project recommends; profile paths were not percent-encoded; profile
+  descriptions were never populated.
+- Documentation corrections: a stale filename in the README's worked example, "two example
+  skills" where five ship, a `vault_health` capability that does not exist, "tooling friction"
+  described as mechanically extracted when it needs judgement, and the notification mute switch
+  located in the vault rather than in `~/.claude/`.
+- Portability: the notification debounce used GNU-only `find -newermt` and failed silently on
+  macOS.
+
 - Wikilink extraction now ignores fenced and inline code, so a note documenting link syntax no
   longer produces phantom broken links. Any vault that describes its own conventions hits this.
 - The vault health assertions live in one script used by both `make vault` and CI. They had

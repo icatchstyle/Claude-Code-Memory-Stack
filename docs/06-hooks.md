@@ -84,8 +84,9 @@ The pattern generalises: *touch only what you created, and stop the moment reali
 Plays a sound when a turn ends or input is needed. Genuinely useful for long runs. Worth reading
 for two techniques it demonstrates:
 
-- **A mute switch outside the code.** A flag file in the vault turns sounds off globally or per
-  event, so silencing them is a one-line edit, not a settings hunt.
+- **A mute switch outside the code.** A flag file (`~/.claude/sound.conf` by default, overridable
+  with `CLAUDE_SOUND_FLAG`) turns sounds off globally or per event, so silencing them is a
+  one-line edit, not a settings hunt.
 - **Debouncing with an atomic lock.** The same event can fire twice in quick succession;
   `mkdir` is atomic, so exactly one of two racing calls wins and the other bails.
 

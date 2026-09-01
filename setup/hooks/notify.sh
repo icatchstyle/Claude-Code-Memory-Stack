@@ -21,7 +21,11 @@ is_off "$EVENT"        && exit 0
 LOCK="/tmp/claude-notify-${EVENT}.lock"
 if ! mkdir "$LOCK" 2>/dev/null; then
   # A fresh lock means this is a duplicate fire; a stale one means we may proceed.
-  [ -n "$(find "$LOCK" -newermt '-3 seconds' 2>/dev/null)" ] && exit 0
+  # `find -newermt` is GNU-only and fails silently on macOS, so compare mtimes directly:
+  # `stat` takes different flags on either platform, hence the fallback.
+  now=$(date +%s)
+  then_=$(stat -c %Y "$LOCK" 2>/dev/null || stat -f %m "$LOCK" 2>/dev/null || echo 0)
+  [ $((now - then_)) -lt 3 ] && exit 0
   touch "$LOCK"
 fi
 

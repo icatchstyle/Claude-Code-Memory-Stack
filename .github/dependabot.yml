@@ -31,3 +31,12 @@ updates:
       prefix: "deps"
     labels: [dependencies, python]
     open-pull-requests-limit: 3
+
+  - package-ecosystem: pip
+    directory: /mcp/sqlite-mcp
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps"
+    labels: [dependencies, python]
+    open-pull-requests-limit: 3

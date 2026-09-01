@@ -32,7 +32,7 @@ exists, it is correct, and it will never surface at the moment it would have sav
 the single most damaging defect in a vault because it produces no symptom.
 
 ```bash
-grep -rLl '^> \[!' --include='*.md' "$VAULT"/*/gotchas "$VAULT"/*/*/gotchas 2>/dev/null
+grep -rL '^> \[!' --include='*.md' "$VAULT"/*/gotchas "$VAULT"/*/*/gotchas 2>/dev/null
 ```
 
 Report every hit. Offer to add the callout, deriving it from the note's first paragraph — but
@@ -51,7 +51,7 @@ Exempt: `_INDEX.md` itself, the vault's entry points, and skill payload folders
 - Mixed date keys (`date:` vs `created:` vs a localised spelling). Pick one; a query over time
   silently misses half the vault otherwise.
 - Date format other than `YYYY-MM-DD`.
-- Unknown `type:` values, or capitalised enum values — `Behoben` and `behoben` are different
+- Unknown `type:` values, or capitalised enum values — `Fixed` and `fixed` are different
   strings to every query engine.
 - Missing `title:`, which makes the note appear untitled in search results.
 

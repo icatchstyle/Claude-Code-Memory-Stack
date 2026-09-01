@@ -128,7 +128,7 @@ pattern rather than everything you might want:
 | `update_note` | Replace or append, preserving frontmatter |
 | `gotcha_check` | Return callout-marked warnings matching a context — the payoff tool |
 | `list_directory` | Structural overview without reading content |
-| `vault_health` | Broken links, orphans, missing indexes, frontmatter drift |
+| `vault_health` | Gotchas without a callout, broken links, orphans, missing indexes |
 
 `gotcha_check` is the one that changes daily life: it turns "notes about problems" into a warning
 system that fires *before* the mistake.

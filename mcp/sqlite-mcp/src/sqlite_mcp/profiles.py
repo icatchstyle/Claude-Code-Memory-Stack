@@ -14,6 +14,8 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
+import urllib.parse
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -50,8 +52,10 @@ class Profile:
         itself refuses. One guard is a rule; two independent guards is a property.
         """
         if self.read_only:
-            uri = f"file:{Path(self.path).as_posix()}?mode=ro"
-            conn = sqlite3.connect(uri, uri=True)
+            # Percent-encode the path: an unquoted '?' or '#' in a filename would be parsed as
+            # the URI's query or fragment, and the database would silently not be the one meant.
+            quoted = urllib.parse.quote(Path(self.path).as_posix())
+            conn = sqlite3.connect(f"file:{quoted}?mode=ro", uri=True)
         else:
             conn = sqlite3.connect(self.path)
         conn.row_factory = sqlite3.Row
@@ -87,6 +91,8 @@ def load_profiles() -> dict[str, Profile]:
 
     Format: SQLITE_MCP_PROFILES="name=/path/to.db:ro,other=/path/other.db:rw"
 
+    Descriptions are optional and come from SQLITE_MCP_DESCRIPTIONS="name=text;other=text".
+
     Deliberately not a config file the agent could edit: the set of things it may touch is
     defined outside its reach, by whoever starts the server.
     """
@@ -96,6 +102,12 @@ def load_profiles() -> dict[str, Profile]:
             "SQLITE_MCP_PROFILES is not set. Example:\n"
             '  SQLITE_MCP_PROFILES="prod=/data/app.db:ro,local=/data/dev.db:rw"'
         )
+
+    descriptions: dict[str, str] = {}
+    for entry in os.environ.get("SQLITE_MCP_DESCRIPTIONS", "").split(";"):
+        if "=" in entry:
+            key, _, value = entry.partition("=")
+            descriptions[key.strip()] = value.strip()
 
     profiles: dict[str, Profile] = {}
     for entry in raw.split(","):
@@ -109,8 +121,10 @@ def load_profiles() -> dict[str, Profile]:
             raise SystemExit(f"Malformed profile entry: {entry!r} (expected name=/path.db:ro)")
         if mode not in ("ro", "rw"):
             raise SystemExit(f"Profile {name!r}: mode must be 'ro' or 'rw', got {mode!r}")
-        profiles[name.strip()] = Profile(
-            name=name.strip(), path=path.strip(), read_only=(mode == "ro")
+        key = name.strip()
+        profiles[key] = Profile(
+            name=key, path=path.strip(), read_only=(mode == "ro"),
+            description=descriptions.get(key, ""),
         )
     return profiles
 
@@ -125,7 +139,9 @@ def run_query(profile: Profile, sql: str, limit: int = MAX_ROWS) -> dict:
         assert_read_only(sql)
 
     limit = max(1, min(limit, MAX_ROWS))
-    with profile.connect() as conn:
+    # sqlite3's own context manager commits or rolls back — it does NOT close. In a long-lived
+    # daemon, which is the pattern this project recommends, that leaks a descriptor per call.
+    with closing(profile.connect()) as conn, conn:
         cur = conn.execute(sql)
         rows = cur.fetchmany(limit + 1)
         truncated = len(rows) > limit

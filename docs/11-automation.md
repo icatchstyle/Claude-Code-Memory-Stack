@@ -39,9 +39,10 @@ session needed. But the *route* — where the thing lived, which query answered 
 was excluded — is in the agent's own reply, and that is orientation knowledge, the highest-value
 category in the vault.
 
-**Tooling friction.** Where a tool was missing or awkward, and what got built instead. This does
-not belong in the knowledge base at all; it belongs in whatever list you keep of things to
-improve. Collect it anyway, and route it there.
+**Tooling friction.** Where a tool was missing or awkward, and what got built instead. Unlike the
+two above this is *not* extracted mechanically — recognising it takes judgement, not pattern
+matching. The harvesting skill looks for it while reading the digest. It does not belong in the
+knowledge base either; route it to whatever list you keep of things to improve.
 
 What is deliberately *not* collected: thinking blocks. Internal reasoning is not knowledge, and
 filing it as if it were is how a vault fills with plausible noise.

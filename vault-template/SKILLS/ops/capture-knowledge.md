@@ -10,7 +10,7 @@ description: >
   `document-project`), or for writing a ticket or wiki page in the user's name (that is
   `write-as-me`).
 argument-hint: "[optional focus, e.g. 'only the docker finding']"
-allowed-tools: Read, Write, Edit, Grep, Glob
+allowed-tools: mcp__vault__*, Read, Grep, Glob
 ---
 
 # Capture knowledge
@@ -120,7 +120,7 @@ End the reply with this line, literally, and only if something was actually writ
 KNOWLEDGE_CAPTURED new=<n> updated=<n>
 ```
 
-The scheduled harvest ([`automation/`](../../../automation/)) uses it to skip the part of the
+The scheduled harvest (`automation/` in the template repository) uses it to skip the part of the
 session already filed. Leave it out on an abort or a zero harvest — then the session stays intact
 for the next run and nothing is lost. See [[SKILLS/ops/mining-stop|mining-stop]] for declining
 without harvesting.

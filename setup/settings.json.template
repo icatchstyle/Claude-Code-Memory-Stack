@@ -10,7 +10,7 @@
     "allow": [
       "Read(<VAULT_PATH>/**)",
       "Edit(<VAULT_PATH>/**)",
-      "mcp__vault"
+      "mcp__vault__*"
     ]
   },
 

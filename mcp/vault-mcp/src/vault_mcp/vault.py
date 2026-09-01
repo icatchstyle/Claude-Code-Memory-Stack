@@ -94,7 +94,8 @@ class Note:
         This is what turns "notes about problems" into a queryable warning system.
         """
         out = []
-        lines = self.body.splitlines()
+        prose = INLINE_CODE.sub("", FENCED_CODE.sub("", self.body))
+        lines = prose.splitlines()
         for i, line in enumerate(lines):
             m = CALLOUT_RE.match(line)
             if not m:
@@ -180,9 +181,14 @@ class Vault:
     # ---------------------------------------------------------------- paths
 
     def resolve(self, path: str) -> Path:
-        """Resolve a vault-relative path, refusing anything that escapes the vault."""
+        """Resolve a vault-relative path, refusing anything that escapes the vault.
+
+        Compares paths, not strings. A prefix test on the string form lets a SIBLING directory
+        through — for a vault at `/data/vault`, the path `../vault-secrets/x.md` resolves to
+        `/data/vault-secrets/x.md`, which starts with `/data/vault` and would be accepted.
+        """
         candidate = (self.root / path.lstrip("/")).resolve()
-        if not str(candidate).startswith(str(self.root)):
+        if candidate != self.root and self.root not in candidate.parents:
             raise ValueError(f"path escapes the vault: {path}")
         return candidate
 
@@ -247,9 +253,13 @@ class Vault:
         terms = {t for t in re.split(r"\W+", context.lower()) if len(t) > 2}
         hits = []
         for note in self.notes.values():
-            # A template's callout is placeholder text ("<One sentence: the problem>"). Returning
-            # it as a warning is pure noise, and the noise lands on every single query.
-            if note.path.startswith("TEMPLATES/"):
+            # Templates carry placeholder callouts ("<One sentence: the problem>"), and indexes
+            # and entry points carry navigational ones ("How to use this"). Both are guidance,
+            # not traps — returning them as warnings puts noise on every single query, which is
+            # exactly how a warning system gets ignored.
+            stem = note.path.rsplit(".", 1)[0]
+            if note.path.startswith("TEMPLATES/") or stem.endswith("_INDEX") \
+                    or stem in ("HOME", "MAP"):
                 continue
             callouts = note.callouts
             if not callouts:

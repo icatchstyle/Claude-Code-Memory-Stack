@@ -5,6 +5,13 @@
 #   ./run.sh --write         # actually let the agent write to the knowledge base
 #   ./run.sh --write --since-days 7
 #
+# Environment:
+#   MINER_VAULT_DIR         path to the vault; if it is a git repository, the run verifies that
+#                           reported writes actually landed instead of trusting the report
+#   MINER_PERMISSION_MODE   permission mode for the headless agent (default: acceptEdits)
+#   MINER_PROJECTS_DIR      where transcripts live (default: ~/.claude/projects)
+#   MINER_STATE_DIR         where state, staging and logs live (default: ~/.claude/knowledge-miner)
+#
 # DRY RUN IS THE DEFAULT ON PURPOSE. This script points an unsupervised agent at your notes with
 # write access. Nobody should get that by forgetting a flag.
 #
@@ -55,6 +62,7 @@ if ! mkdir "$LOCK" 2>/dev/null; then
     exit 0
   fi
   log "Stale lock found, taking over."
+  touch "$LOCK"          # refresh, or a second run started moments later takes over too
 fi
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
@@ -78,6 +86,7 @@ NEW_STATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 rm -rf "$STAGING"
 COLLECT_ARGS=(--out "$STAGING" "${SINCE_ARGS[@]}")
 [ -n "${CLAUDE_SESSION_ID:-}" ] && COLLECT_ARGS+=(--self-session "$CLAUDE_SESSION_ID")
+[ -n "${MINER_PROJECTS_DIR:-}" ] && COLLECT_ARGS+=(--projects-dir "$MINER_PROJECTS_DIR")
 
 log "Collecting…"
 python3 "$HERE/collect_sessions.py" "${COLLECT_ARGS[@]}" 2>&1 | tee -a "$LOG" || fail "collector"
@@ -112,7 +121,22 @@ case "$PROBE" in
 esac
 
 # --- harvest ------------------------------------------------------------------------------
-log "Harvesting with /$SKILL…"
+# Headless runs have no one to answer a permission prompt, so a write is simply refused unless
+# the mode says otherwise. Without this the run looks successful and files nothing.
+PERMISSION_MODE="${MINER_PERMISSION_MODE:-acceptEdits}"
+
+# Is the vault a git repository? If it is, we can prove afterwards that something was actually
+# written, rather than trusting the agent's own report. This is the functional reason the
+# documentation asks you to version-control the vault.
+VAULT_DIR="${MINER_VAULT_DIR:-}"
+vault_dirty() {
+  [ -n "$VAULT_DIR" ] || return 2
+  git -C "$VAULT_DIR" rev-parse --git-dir >/dev/null 2>&1 || return 2
+  [ -n "$(git -C "$VAULT_DIR" status --porcelain 2>/dev/null)" ]
+}
+vault_dirty; BEFORE=$?
+
+log "Harvesting with /$SKILL (permission mode: $PERMISSION_MODE)…"
 PROMPT="Run /$SKILL over the session digests in $STAGING.
 
 Each file is one past session. Work through them and file what is durable and generalisable.
@@ -125,10 +149,26 @@ write nothing — that is a valid outcome, not a failure.
 
 End your reply with: MINER_RESULT new=<n> updated=<n> skipped=<n>"
 
-if claude -p "$PROMPT" 2>&1 | tee -a "$LOG" | grep -q 'MINER_RESULT'; then
-  printf '%s' "$NEW_STATE" >"$STATE_FILE"
-  log "Done. State advanced to $NEW_STATE."
-else
-  # --- 1. state advances only on success --------------------------------------------------
-  fail "no MINER_RESULT marker in the reply — treating the run as incomplete"
+REPLY="$(claude -p --permission-mode "$PERMISSION_MODE" "$PROMPT" 2>&1 | tee -a "$LOG")"
+
+RESULT="$(printf '%s' "$REPLY" | grep -o 'MINER_RESULT.*' | tail -1)"
+[ -n "$RESULT" ] || fail "no MINER_RESULT marker in the reply — treating the run as incomplete"
+
+NEW_COUNT="$(printf '%s' "$RESULT" | sed -n 's/.*new=\([0-9]*\).*/\1/p')"
+UPD_COUNT="$(printf '%s' "$RESULT" | sed -n 's/.*updated=\([0-9]*\).*/\1/p')"
+WROTE=$(( ${NEW_COUNT:-0} + ${UPD_COUNT:-0} ))
+log "Reported: ${RESULT}"
+
+# The marker alone is not proof. An agent whose writes were refused still reports a result —
+# with zeroes, or worse, with counts for writes that never landed.
+if [ "$WROTE" -gt 0 ]; then
+  vault_dirty; AFTER=$?
+  case "$BEFORE:$AFTER" in
+    2:*) log "NOTE: the vault is not a git repository, so the report could not be verified." ;;
+    *:0) log "Verified: the vault changed on disk." ;;
+    *:1) fail "reported $WROTE write(s) but the vault is unchanged — writes were refused" ;;
+  esac
 fi
+
+printf '%s' "$NEW_STATE" >"$STATE_FILE"
+log "Done. State advanced to $NEW_STATE."

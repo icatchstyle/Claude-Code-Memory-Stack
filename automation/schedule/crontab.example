@@ -8,7 +8,7 @@
 PATH=/usr/local/bin:/usr/bin:/bin:/home/YOUR_USER/.local/bin
 
 # m  h  dom mon dow  command
-  20 7  *   *   *    /path/to/automation/run.sh --write >>/tmp/knowledge-miner.log 2>&1
+  20 7  *   *   *    /path/to/automation/run.sh >>/tmp/knowledge-miner.log 2>&1
 
-# Start WITHOUT --write for the first week. Read the digests it collects and the reports it
-# would have acted on before letting an unattended agent write to your notes.
+# Deliberately WITHOUT --write: this runs in dry run. Read the digests it collects for a week
+# before adding --write and letting an unattended agent write to your notes.

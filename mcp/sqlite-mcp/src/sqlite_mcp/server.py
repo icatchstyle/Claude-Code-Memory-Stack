@@ -9,6 +9,7 @@ Read docs/05-mcp.md alongside this file — the argument it makes is what this i
 from __future__ import annotations
 
 import os
+from contextlib import closing
 
 from mcp.server.fastmcp import FastMCP
 
@@ -97,7 +98,7 @@ def describe_table(profile: str, table: str) -> dict:
     if table not in known:
         raise ValueError(f"Unknown table {table!r} in profile {p.name!r}. Call list_tables first.")
 
-    with p.connect() as conn:
+    with closing(p.connect()) as conn:
         cols = conn.execute(f'PRAGMA table_info("{table}")').fetchall()
     return {
         "profile": p.name,

@@ -96,7 +96,7 @@ $ gotcha_check(context="docker container mount, deploying the vault server")
 danger  The server reports "healthy" and finds nothing
         After a host-side re-sync the container's bind mount can point at a folder that no
         longer exists. Every read returns "not found" while the host path is visibly full.
-        → GLOBAL/gotchas/docker/EXAMPLE-bind-mount-goes-stale.md
+        → GLOBAL/gotchas/docker/bind-mount-goes-stale.md
 
 danger  Never copy a skill into the active location
         A copy drifts. You edit the vault version, nothing changes, and you lose an hour
@@ -141,7 +141,7 @@ what turns "notes about problems" into a warning system.
 ├── vault-template/               ← the vault skeleton, ready to copy
 │   ├── HOME.md, MAP.md           navigation entry points
 │   ├── GLOBAL/ PROJECTS/ …       the folder taxonomy, each with an _INDEX.md
-│   ├── SKILLS/                   two annotated example skills, where the docs say they belong
+│   ├── SKILLS/                   five annotated example skills, where the docs say they belong
 │   └── TEMPLATES/                note templates (gotcha, project, ADR, skill, …)
 ├── automation/                   ← the scheduled harvest: collector, runner, schedules
 └── mcp/                          ← two small but real MCP servers

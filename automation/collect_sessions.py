@@ -18,7 +18,10 @@ WHAT IT DELIBERATELY EXTRACTS
          is, and mechanically collectable, which is exactly why a machine should do it.
       2. Subagent output — the main transcript keeps only the conclusion; the route to it
          (where things live, which query answered what) is in the agent's reply.
-      3. Tooling friction — where a tool was missing or awkward, and what was built instead.
+      3. Prompts and reports — the narrative that gives the other two their context.
+    Tooling friction — where a tool was missing or awkward — is deliberately NOT extracted
+    here: recognising it needs judgement, not pattern matching. The harvesting skill looks for
+    it in the digest instead.
 
 THE FRAGILE PART
     `parse_line` below reads Claude Code's transcript format, which is an internal detail and
@@ -288,7 +291,7 @@ def main() -> int:
         since = datetime.fromisoformat(args.since_iso.replace("Z", "+00:00"))
         if since.tzinfo is None:
             since = since.replace(tzinfo=timezone.utc)
-    elif args.since_days:
+    elif args.since_days is not None:
         since = datetime.now(timezone.utc) - timedelta(days=args.since_days)
     else:
         since = datetime.now(timezone.utc) - timedelta(days=1)

@@ -169,3 +169,37 @@ def test_links_inside_code_are_not_counted(vault, tmp_path):
     vault.reindex()
     links = vault.notes["GUIDELINES.md"].links
     assert links == ["HOME"]
+
+
+@pytest.mark.parametrize("escape", [
+    "../../etc/passwd",
+    "../vault-secrets/secret.md",   # sibling whose name starts with the vault's own name
+    "../../vault/../vault-secrets/secret.md",
+])
+def test_resolve_refuses_every_escape(vault, escape):
+    # A string-prefix test passes the sibling case: /data/vault-secrets starts with /data/vault.
+    with pytest.raises(ValueError):
+        vault.resolve(escape)
+
+
+def test_leading_slash_is_treated_as_vault_relative(vault):
+    # "/etc/passwd" means the vault's own etc/passwd, not the system one. Surprising if you
+    # expect POSIX semantics, but safe — and it keeps every path in the API vault-relative.
+    resolved = vault.resolve("/etc/passwd")
+    assert resolved == vault.root / "etc" / "passwd"
+
+
+def test_resolve_accepts_paths_inside_the_vault(vault):
+    assert vault.resolve("HOME.md").name == "HOME.md"
+    assert vault.resolve("GLOBAL/gotchas/docker/mount-stale.md").exists()
+
+
+def test_gotcha_check_ignores_navigational_callouts(vault, tmp_path):
+    # An index explaining how to use the vault is guidance, not a trap.
+    (tmp_path / "HOME.md").write_text(
+        "---\ntitle: Home\ntype: index\n---\n\n# Home\n\n"
+        "> [!tip] How to use this\n> Search docker first, then read.\n",
+        encoding="utf-8",
+    )
+    vault.reindex()
+    assert not any(h["source"] == "HOME.md" for h in vault.gotcha_check("docker"))

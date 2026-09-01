@@ -134,3 +134,34 @@ def test_unknown_mode_is_rejected(monkeypatch, db):
     monkeypatch.setenv("SQLITE_MCP_PROFILES", f"x={db}:maybe")
     with pytest.raises(SystemExit):
         load_profiles()
+
+
+def test_descriptions_are_read_from_the_environment(monkeypatch, db):
+    monkeypatch.setenv("SQLITE_MCP_PROFILES", f"prod={db}:ro")
+    monkeypatch.setenv("SQLITE_MCP_DESCRIPTIONS", "prod=replica, read-only")
+    assert load_profiles()["prod"].description == "replica, read-only"
+
+
+def test_a_path_with_a_question_mark_still_opens(tmp_path):
+    # Unquoted, the '?' would start the URI's query string and the database would silently be
+    # a different (empty) one.
+    weird = tmp_path / "we?ird.db"
+    conn = sqlite3.connect(weird)
+    conn.execute("CREATE TABLE t (a INT)")
+    conn.execute("INSERT INTO t VALUES (7)")
+    conn.commit()
+    conn.close()
+
+    profile = Profile(name="ro", path=str(weird), read_only=True)
+    assert run_query(profile, "SELECT a FROM t")["rows"][0]["a"] == 7
+
+
+def test_connections_do_not_leak(ro):
+    # sqlite3's context manager commits; it does not close. In a long-lived daemon that leaks
+    # a descriptor per call, so run_query closes explicitly.
+    import gc
+    for _ in range(50):
+        run_query(ro, "SELECT 1 AS n")
+    gc.collect()
+    leaked = [o for o in gc.get_objects() if isinstance(o, sqlite3.Connection)]
+    assert len(leaked) < 5

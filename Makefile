@@ -28,6 +28,12 @@ shell: ## Syntax-check every shell script and verify its executable bit is commi
 		echo "Not executable in git (fix: git update-index --chmod=+x <file>):"; \
 		echo "$$bad"; fail=1; \
 	fi; \
+	if command -v shellcheck >/dev/null 2>&1; then \
+		find . -name '*.sh' -not -path './.git/*' -print0 \
+			| xargs -0 shellcheck --severity=warning || fail=1; \
+	else \
+		echo "NOTE: shellcheck not installed — CI will still run it."; \
+	fi; \
 	exit $$fail
 
 .PHONY: vault
@@ -37,10 +43,11 @@ vault: ## Assert the vault template passes the rules it teaches
 .PHONY: check
 check: test links shell vault ## Run everything CI runs
 
-.PHONY: demo
+.PHONY: harvest-dry
 harvest-dry: ## Collect session digests without writing anything
 	./automation/run.sh
 
+.PHONY: demo
 demo: ## Lay the stack down in a throwaway location and show what it produces
 	@rm -rf /tmp/mem-stack-demo
 	@./setup/bootstrap.sh --vault /tmp/mem-stack-demo/vault --claude-dir /tmp/mem-stack-demo/claude
