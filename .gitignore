@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+.venv/
+venv/
+
+# Agent tooling — local settings and state must never be committed:
+# they carry machine-specific paths and, in settings.local.json, sometimes credentials.
+.claude/
+.claude-jobs/
+CLAUDE.local.md
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db

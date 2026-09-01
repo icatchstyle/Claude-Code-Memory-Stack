@@ -1,0 +1,54 @@
+name: Failure mode / anti-pattern
+description: A way these setups break that the docs should warn about
+labels: [docs, failure-mode]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        These are the most valuable contributions to this repository — but only from experience.
+        A failure mode you have actually hit beats any amount of general advice.
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Symptom
+      description: How it presents itself, before you understood the cause. This is how others will search for it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: cause
+    attributes:
+      label: Cause
+      description: Why it happens.
+    validations:
+      required: true
+
+  - type: textarea
+    id: fix
+    attributes:
+      label: Fix and prevention
+      description: What resolves it, and what stops it happening again.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: The vocabulary this project uses for gotchas.
+      options:
+        - danger — data loss, production breakage, silent corruption
+        - warning — the standard trap, costs an hour
+        - tip — a better way that is not obvious
+        - info — context that prevents a wrong assumption
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have actually hit this, it is not hypothetical.
+          required: true

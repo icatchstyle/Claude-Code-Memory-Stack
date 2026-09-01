@@ -1,0 +1,58 @@
+name: Bug report
+description: Something in the runnable parts does not work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The more precisely the symptom is described, the faster this gets fixed.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part?
+      options:
+        - bootstrap.sh
+        - hooks
+        - reference MCP server (vault-mcp)
+        - vault template
+        - example skills
+        - documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: The symptom as you first met it, plus what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ./setup/bootstrap.sh --vault ~/vault
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS and version, Python version, and whether you run under WSL, a container, or natively.
+      placeholder: |
+        OS: Ubuntu 24.04 under WSL2
+        Python: 3.12.3
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output
+      description: Error messages or logs. Remove host names, user names, and anything internal.
+      render: shell

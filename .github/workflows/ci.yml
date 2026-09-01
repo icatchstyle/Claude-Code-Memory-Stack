@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # The vault layer is stdlib-only by design, so the tests need nothing but pytest.
+      # Installing the package would pull the MCP SDK in for no benefit here.
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run tests
+        working-directory: mcp/vault-mcp
+        run: pytest tests/ -v
+
+  package:
+    name: Package builds and imports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the server
+        working-directory: mcp/vault-mcp
+        run: python -m pip install --upgrade pip . 
+      - name: Import check
+        run: python -c "import vault_mcp; print(vault_mcp.__version__)"
+
+  shell:
+    name: Shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The repository is authored on a Windows mount, where git sets core.filemode=false
+      # and therefore ignores local permission bits. A chmod +x there never reaches the index,
+      # and nothing fails locally because the mount reports every file as executable anyway.
+      - name: Executable bit is committed
+        run: |
+          bad=$(git ls-files -s -- '*.sh' | awk '$1 != "100755" { print $4 }')
+          if [ -n "$bad" ]; then
+            echo "Not executable in git. Fix with: git update-index --chmod=+x <file>"
+            echo "$bad"
+            exit 1
+          fi
+          echo "all shell scripts are mode 100755"
+
+      - name: Syntax check
+        run: |
+          fail=0
+          while IFS= read -r -d '' f; do
+            bash -n "$f" || fail=1
+          done < <(find . -name '*.sh' -print0)
+          exit "$fail"
+
+      - name: ShellCheck
+        run: |
+          shellcheck --version
+          find . -name '*.sh' -print0 | xargs -0 shellcheck --severity=warning
+
+  docs:
+    name: Documentation links resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 .github/scripts/check-links.py
+
+  vault:
+    name: Vault template is self-consistent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The template must pass the health check its own server implements:
+      # no gotcha without a severity callout, no orphans, no folder without an index.
+      - name: Health check
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, "mcp/vault-mcp/src")
+          from vault_mcp.vault import Vault
+
+          v = Vault("vault-template")
+          print(f"indexed {v.reindex()} notes")
+          h = v.health()
+
+          problems = []
+          if h["gotchas_without_callout"]:
+              problems.append(f"gotchas without a severity callout: {h['gotchas_without_callout']}")
+          if h["orphans"]:
+              problems.append(f"orphan notes: {h['orphans']}")
+          if h["folders_without_index"]:
+              problems.append(f"folders without _INDEX.md: {h['folders_without_index']}")
+
+          # MAP.md links two contracts that intentionally do not exist yet; a dangling
+          # wikilink is a to-do marker, which the template documents on the page itself.
+          unexpected = [b for b in h["broken_links"]
+                        if b["to"] not in {"GLOBAL/architecture/api-auth-contract",
+                                           "GLOBAL/architecture/shared-database"}]
+          if unexpected:
+              problems.append(f"unexpected broken links: {unexpected}")
+
+          if problems:
+              print("FAIL")
+              for p in problems:
+                  print(f"  - {p}")
+              raise SystemExit(1)
+          print("OK: template passes its own health check")
+          PY
+
+  bootstrap:
+    name: Bootstrap runs end to end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dry run
+        run: ./setup/bootstrap.sh --vault /tmp/v --claude-dir /tmp/c --dry-run
+
+      - name: Real run
+        run: ./setup/bootstrap.sh --vault /tmp/v --claude-dir /tmp/c
+
+      - name: Verify the result
+        run: |
+          test -f /tmp/v/HOME.md
+          test -x /tmp/c/hooks/memory-recall-reminder.sh
+          test -f /tmp/c/CLAUDE.md
+          notes=$(find /tmp/v -name '*.md' | wc -l)
+          echo "vault notes: $notes"
+          test "$notes" -gt 30
+
+      - name: Second run must be idempotent
+        run: |
+          ./setup/bootstrap.sh --vault /tmp/v --claude-dir /tmp/c | tee out.txt
+          grep -q 'skip' out.txt
+
+      - name: Recall hook emits context, and stays silent on acknowledgements
+        run: |
+          echo '{"prompt":"fix the docker mount"}' | /tmp/c/hooks/memory-recall-reminder.sh | grep -q additionalContext
+          test -z "$(echo '{"prompt":"ok"}' | /tmp/c/hooks/memory-recall-reminder.sh)"
