@@ -28,6 +28,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Two more example skills** — `vault-lint`, the maintenance counterpart to `capture-knowledge`,
   and `multi`, the opt-in keyword for parallel execution. Both were described in the
   documentation without being shipped.
+- GitHub Actions updated to `checkout@v7` and `setup-python@v7`.
 - Dependabot version updates for GitHub Actions and the reference server's Python dependencies,
   grouped into one pull request per ecosystem and scheduled monthly.
 
