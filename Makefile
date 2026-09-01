@@ -13,6 +13,7 @@ help: ## Show this help
 test: ## Run both reference servers' tests
 	cd mcp/vault-mcp && pytest tests/ -v
 	cd mcp/sqlite-mcp && pytest tests/ -v
+	cd automation && pytest tests/ -v
 
 .PHONY: links
 links: ## Verify every relative Markdown link resolves
@@ -37,6 +38,9 @@ vault: ## Assert the vault template passes the rules it teaches
 check: test links shell vault ## Run everything CI runs
 
 .PHONY: demo
+harvest-dry: ## Collect session digests without writing anything
+	./automation/run.sh
+
 demo: ## Lay the stack down in a throwaway location and show what it produces
 	@rm -rf /tmp/mem-stack-demo
 	@./setup/bootstrap.sh --vault /tmp/mem-stack-demo/vault --claude-dir /tmp/mem-stack-demo/claude

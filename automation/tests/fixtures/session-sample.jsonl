@@ -1,0 +1,6 @@
+{"type": "user", "timestamp": "2026-09-01T08:00:00Z", "cwd": "/work/app", "gitBranch": "main", "message": {"content": "Deploy is failing, look into it"}}
+{"type": "assistant", "timestamp": "2026-09-01T08:00:10Z", "message": {"content": [{"type": "thinking", "text": "internal reasoning that must never reach the digest"}, {"type": "tool_use", "id": "t1", "name": "Bash", "input": {"command": "kubectl get pods"}}]}}
+{"type": "user", "timestamp": "2026-09-01T08:00:12Z", "message": {"content": [{"type": "tool_result", "tool_use_id": "t1", "is_error": true, "content": "error: You must be logged in to the server (Unauthorized)"}]}}
+{"type": "assistant", "timestamp": "2026-09-01T08:00:20Z", "message": {"content": [{"type": "text", "text": "The kube context had expired; refreshed it."}]}}
+{"type": "assistant", "timestamp": "2026-09-01T08:01:00Z", "isSidechain": true, "message": {"content": [{"type": "text", "text": "Config lives in deploy/overlays/prod."}]}}
+{"type": "ai-title", "aiTitle": "Deploy failure", "sessionId": "sample"}

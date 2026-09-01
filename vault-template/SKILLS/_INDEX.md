@@ -13,6 +13,7 @@ never copies. See [[SKILLS/INSTALLING|INSTALLING]] for the exact commands.
 |---|---|---|
 | `capture-knowledge` | ops | Capture a session's durable knowledge into the vault |
 | `vault-lint` | ops | Find the defects that make notes unfindable |
+| `mining-stop` | ops | Declare a session not worth harvesting |
 | `multi` | ops | The opt-in keyword for parallel execution |
 | `review-changes` | analysis | Multi-dimensional review of the current diff, adversarially verified |
 

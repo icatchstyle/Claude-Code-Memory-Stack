@@ -30,6 +30,37 @@ trap is found — a gotcha written while the surprise is fresh is worth three wr
 
 ## Steps
 
+### 0. Go through the session in episodes
+
+Split the conversation into work episodes — one episode is one task or topic — and apply this
+grid to each. Questions 1–4 are the point of the skill; 5–8 only when the episode yields
+something.
+
+| # | Question | Category |
+|---|---|---|
+| 1 | **Where** was the relevant code, config, table, dashboard? | orientation |
+| 2 | Which **dependency or coupling** became visible (service → database, repo → service)? | coupling |
+| 3 | **How was a piece of information obtained** — which tool, query, log source? | access path |
+| 4 | Which **command or query** is reusable once parameterised? | snippet |
+| 5 | Which **procedure** was worked out that will be repeated? | runbook |
+| 6 | What **went wrong**, as a transferable pattern? | gotcha |
+| 7 | Which **decision** was made, including rejected alternatives? | decision |
+| 8 | What stayed **open**? | open item |
+
+Couplings are the most valuable answer here — they only become visible when working across system
+boundaries, and nothing else in the stack records them.
+
+### 0b. Three sources that fall through the grid
+
+These happen *in passing*, are never part of the task, and are therefore never reported. Go
+through them deliberately.
+
+| Source | What to look for |
+|---|---|
+| **Failed tool calls** | Every rejected call: wrong parameter name, missing permission, timeout, "not found", a 4xx. Including the ones that worked on the second try. Worked around in the moment and never discussed — and the richest source of gotchas there is. |
+| **Subagent replies** | What came back: locations, query recipes, dead ends. The main transcript keeps only the conclusion; the route to it is in the reply. |
+| **Tooling friction** | Where a tool was missing or awkward, and what was built instead. This does not belong in the knowledge base — route it to wherever you track improvements. |
+
 ### 1. Classify
 
 For each candidate, decide what it is. Be strict:
@@ -76,8 +107,23 @@ that grew by accretion is unreadable.
 
 ### 6. Report
 
-List what was written, updated, and deliberately skipped — with the reason for the skips. The
-skips are the part the user needs to be able to veto.
+Open with the count — episodes reviewed, candidates found, new, updated, discarded at the
+generalisation gate, skipped as already present. The statistic is the evidence that the grid ran
+on every episode, and it is mandatory even when everything is zero.
+
+Then list what was written, updated, and deliberately skipped — with the reason for the skips.
+The skips are the part the user needs to be able to veto.
+
+End the reply with this line, literally, and only if something was actually written:
+
+```
+KNOWLEDGE_CAPTURED new=<n> updated=<n>
+```
+
+The scheduled harvest ([`automation/`](../../../automation/)) uses it to skip the part of the
+session already filed. Leave it out on an abort or a zero harvest — then the session stays intact
+for the next run and nothing is lost. See [[SKILLS/ops/mining-stop|mining-stop]] for declining
+without harvesting.
 
 ## Guardrails
 

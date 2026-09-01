@@ -1,0 +1,14 @@
+# Linux / WSL — daily harvest at 07:20.
+#
+# Install with:  crontab -e
+#
+# Note the absolute paths: cron runs with a minimal environment and will not find `claude`
+# or `python3` through your shell profile. Set PATH explicitly or use full paths.
+
+PATH=/usr/local/bin:/usr/bin:/bin:/home/YOUR_USER/.local/bin
+
+# m  h  dom mon dow  command
+  20 7  *   *   *    /path/to/automation/run.sh --write >>/tmp/knowledge-miner.log 2>&1
+
+# Start WITHOUT --write for the first week. Read the digests it collects and the reports it
+# would have acted on before letting an unattended agent write to your notes.

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  macOS launchd — daily harvest at 07:20.
+
+  Install:
+      cp com.example.knowledge-miner.plist ~/Library/LaunchAgents/
+      launchctl load ~/Library/LaunchAgents/com.example.knowledge-miner.plist
+
+  Remove:
+      launchctl unload ~/Library/LaunchAgents/com.example.knowledge-miner.plist
+
+  Replace YOUR_USER and the path. Note there is no --write below: start in dry-run and add it
+  once you trust what the digests contain.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.example.knowledge-miner</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/YOUR_USER/path/to/automation/run.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key><integer>7</integer>
+        <key>Minute</key><integer>20</integer>
+    </dict>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/knowledge-miner.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/knowledge-miner.err</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

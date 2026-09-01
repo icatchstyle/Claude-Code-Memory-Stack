@@ -41,6 +41,12 @@ jobs:
         working-directory: mcp/sqlite-mcp
         run: pytest tests/ -v
 
+      # Fixture tests over Claude Code's transcript format. If these fail, the format moved —
+      # which is exactly the signal they exist to give, instead of silently empty digests.
+      - name: Run tests — automation
+        working-directory: automation
+        run: pytest tests/ -v
+
   package:
     name: Package builds and imports
     runs-on: ubuntu-latest

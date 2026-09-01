@@ -14,6 +14,7 @@ Read in order the first time; use as reference afterwards.
 | 08 | [Operations](08-operations.md) | How do I keep this alive past month three? |
 | 09 | [Adoption](09-adoption.md) | What do I do first, and what do I defer? |
 | 10 | [Anti-patterns](10-antipatterns.md) | How do these setups actually fail? |
+| 11 | [Automation](11-automation.md) | How do I stop the write-back loop depending on discipline? |
 
 **In a hurry?** Read [09-adoption.md](09-adoption.md) and [10-antipatterns.md](10-antipatterns.md).
 The first tells you what to build; the second tells you what not to.

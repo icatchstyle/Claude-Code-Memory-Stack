@@ -49,6 +49,7 @@ on your vault being mounted.
 
 - [[SKILLS/ops/capture-knowledge|capture-knowledge]] — single file, tightly scoped description
 - [[SKILLS/ops/vault-lint|vault-lint]] — single file, the maintenance counterpart
+- [[SKILLS/ops/mining-stop|mining-stop]] — single file, deliberately the smallest skill here
 - [[SKILLS/ops/multi|multi]] — single file, a permission marker rather than a procedure
 - [[SKILLS/analysis/review-changes/SKILL|review-changes]] — `references/` and `scripts/`, showing
   the split between prose and mechanism

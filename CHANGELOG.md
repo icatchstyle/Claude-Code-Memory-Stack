@@ -9,6 +9,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`automation/`** — the scheduled harvest that closes the write-back loop without relying on
+  discipline: a collector turning past sessions into digests, a runner that is dry-run by default,
+  and schedule examples for cron, launchd and Task Scheduler. It deliberately extracts what a
+  person never reports — failed tool calls, subagent replies — and refuses to write unless the
+  conventions load first, advances its state only on success, and never harvests a session twice.
+  Documented in `docs/11-automation.md`, with the one format-dependent function isolated and
+  covered by fixtures.
+- **`mining-stop`** — the abstaining counterpart to `capture-knowledge`: marks a session as not
+  worth harvesting, writes nothing.
+- **`capture-knowledge`** now works through the session in episodes against an eight-question
+  grid, and deliberately mines the three sources that fall through it.
 - **`mcp/sqlite-mcp/`** — a second reference server demonstrating guardrails enforced in code:
   named profiles where read-only is checked twice, independently (statement inspection after
   comment stripping, plus SQLite's own read-only mode), bounded output, and errors that name the

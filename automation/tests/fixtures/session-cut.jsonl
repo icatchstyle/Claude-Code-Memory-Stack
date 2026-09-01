@@ -1,0 +1,4 @@
+{"type": "user", "timestamp": "2026-09-01T09:00:00Z", "message": {"content": "old work"}}
+{"type": "assistant", "timestamp": "2026-09-01T09:00:05Z", "message": {"content": [{"type": "text", "text": "Done.\n\nKNOWLEDGE_CAPTURED new=2 updated=1"}]}}
+{"type": "user", "timestamp": "2026-09-01T09:10:00Z", "message": {"content": "new work after the cut"}}
+{"type": "assistant", "timestamp": "2026-09-01T09:10:05Z", "message": {"content": [{"type": "text", "text": "Handled the new part."}]}}

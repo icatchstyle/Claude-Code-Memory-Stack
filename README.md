@@ -130,7 +130,8 @@ what turns "notes about problems" into a warning system.
 │   ├── 07-scale.md               subagents, workflows, context economics
 │   ├── 08-operations.md          maintenance, linting, backup, troubleshooting
 │   ├── 09-adoption.md            day 1 → week 1 → month 1, in order
-│   └── 10-antipatterns.md        the failure modes, and what they cost
+│   ├── 10-antipatterns.md        the failure modes, and what they cost
+│   └── 11-automation.md          closing the write-back loop without discipline
 ├── Makefile                      make check — everything CI runs
 ├── setup/                        ← copy-and-edit runtime files
 │   ├── bootstrap.sh              one command to lay the whole thing down
@@ -142,6 +143,7 @@ what turns "notes about problems" into a warning system.
 │   ├── GLOBAL/ PROJECTS/ …       the folder taxonomy, each with an _INDEX.md
 │   ├── SKILLS/                   two annotated example skills, where the docs say they belong
 │   └── TEMPLATES/                note templates (gotcha, project, ADR, skill, …)
+├── automation/                   ← the scheduled harvest: collector, runner, schedules
 └── mcp/                          ← two small but real MCP servers
     ├── vault-mcp/                structured retrieval over the vault
     └── sqlite-mcp/               guardrails enforced in code, not in a prompt
