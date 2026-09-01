@@ -17,7 +17,7 @@ import os
 from datetime import date
 from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from .vault import Vault, NOTE_SUFFIXES
 
@@ -26,7 +26,7 @@ if not VAULT_PATH:
     raise SystemExit("VAULT_PATH is not set — point it at your vault directory.")
 
 vault = Vault(VAULT_PATH)
-mcp = FastMCP("vault")
+mcp = MCPServer("vault")
 
 MAX_NOTE_CHARS = 40_000
 
@@ -237,9 +237,12 @@ def vault_health() -> dict:
 def main() -> None:
     transport = os.environ.get("MCP_TRANSPORT", "stdio")
     if transport == "http":
-        mcp.settings.host = os.environ.get("MCP_HOST", "127.0.0.1")
-        mcp.settings.port = int(os.environ.get("MCP_PORT", "8765"))
-        mcp.run(transport="streamable-http")
+        # Since SDK 2.x transport parameters go to run(); mcp.settings.host/port are gone.
+        mcp.run(
+            transport="streamable-http",
+            host=os.environ.get("MCP_HOST", "127.0.0.1"),
+            port=int(os.environ.get("MCP_PORT", "8765")),
+        )
     else:
         mcp.run()
 

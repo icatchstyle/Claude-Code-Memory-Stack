@@ -11,12 +11,12 @@ from __future__ import annotations
 import os
 from contextlib import closing
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from .profiles import MAX_ROWS, ReadOnlyViolation, load_profiles, run_query
 
 PROFILES = load_profiles()
-mcp = FastMCP("sqlite")
+mcp = MCPServer("sqlite")
 
 
 def _get(name: str):
@@ -119,9 +119,12 @@ def describe_table(profile: str, table: str) -> dict:
 def main() -> None:
     transport = os.environ.get("MCP_TRANSPORT", "stdio")
     if transport == "http":
-        mcp.settings.host = os.environ.get("MCP_HOST", "127.0.0.1")
-        mcp.settings.port = int(os.environ.get("MCP_PORT", "8766"))
-        mcp.run(transport="streamable-http")
+        # Since SDK 2.x transport parameters go to run(); mcp.settings.host/port are gone.
+        mcp.run(
+            transport="streamable-http",
+            host=os.environ.get("MCP_HOST", "127.0.0.1"),
+            port=int(os.environ.get("MCP_PORT", "8766")),
+        )
     else:
         mcp.run()
 

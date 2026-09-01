@@ -34,6 +34,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Both servers were broken against the current MCP SDK.** `mcp>=1.2.0` now resolves to 2.x,
+  where `FastMCP` was renamed to `MCPServer` and transport parameters moved from
+  `mcp.settings` onto `run()`. Anyone installing them today would have hit an ImportError.
+  Migrated to the 2.x API and pinned to `mcp>=2.0,<3`. The tests never caught it because they
+  cover the dependency-free layer; the CI import check added in this release did, on its first
+  run.
 - **Path traversal in `Vault.resolve`.** It compared path strings by prefix, so a sibling
   directory got through: for a vault at `/data/vault`, `../vault-secrets/x.md` resolved to
   `/data/vault-secrets/x.md`, which starts with the vault's path and was accepted — readable and
