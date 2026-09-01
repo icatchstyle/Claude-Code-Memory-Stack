@@ -31,13 +31,7 @@ shell: ## Syntax-check every shell script and verify its executable bit is commi
 
 .PHONY: vault
 vault: ## Assert the vault template passes the rules it teaches
-	@python3 -c "import sys; sys.path.insert(0, 'mcp/vault-mcp/src'); \
-from vault_mcp.vault import Vault; \
-v = Vault('vault-template'); n = v.reindex(); h = v.health(); \
-assert not h['gotchas_without_callout'], h['gotchas_without_callout']; \
-assert not h['orphans'], h['orphans']; \
-assert not h['folders_without_index'], h['folders_without_index']; \
-print(f'vault-template: {n} notes, health OK')"
+	python3 .github/scripts/check-vault.py
 
 .PHONY: check
 check: test links shell vault ## Run everything CI runs

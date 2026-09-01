@@ -111,42 +111,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      # The template must pass the health check its own server implements:
-      # no gotcha without a severity callout, no orphans, no folder without an index.
+      # Uses the same script as `make vault`, so a green local run predicts a green CI run.
       - name: Health check
-        run: |
-          python - <<'PY'
-          import sys
-          sys.path.insert(0, "mcp/vault-mcp/src")
-          from vault_mcp.vault import Vault
-
-          v = Vault("vault-template")
-          print(f"indexed {v.reindex()} notes")
-          h = v.health()
-
-          problems = []
-          if h["gotchas_without_callout"]:
-              problems.append(f"gotchas without a severity callout: {h['gotchas_without_callout']}")
-          if h["orphans"]:
-              problems.append(f"orphan notes: {h['orphans']}")
-          if h["folders_without_index"]:
-              problems.append(f"folders without _INDEX.md: {h['folders_without_index']}")
-
-          # MAP.md links two contracts that intentionally do not exist yet; a dangling
-          # wikilink is a to-do marker, which the template documents on the page itself.
-          unexpected = [b for b in h["broken_links"]
-                        if b["to"] not in {"GLOBAL/architecture/api-auth-contract",
-                                           "GLOBAL/architecture/shared-database"}]
-          if unexpected:
-              problems.append(f"unexpected broken links: {unexpected}")
-
-          if problems:
-              print("FAIL")
-              for p in problems:
-                  print(f"  - {p}")
-              raise SystemExit(1)
-          print("OK: template passes its own health check")
-          PY
+        run: python3 .github/scripts/check-vault.py
 
   bootstrap:
     name: Bootstrap runs end to end

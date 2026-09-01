@@ -19,6 +19,12 @@ NOTE_SUFFIXES = {".md", ".mmd"}
 # Obsidian-style callout: "> [!warning] Title"
 CALLOUT_RE = re.compile(r"^>\s*\[!(?P<severity>\w+)\]\s*(?P<title>.*)$", re.MULTILINE)
 WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
+
+# A vault documents its own conventions, so `[[path|alias]]` appears as an EXAMPLE in prose far
+# more often than one expects. Counting those as real links produces phantom broken links that
+# no amount of staring at the note explains.
+FENCED_CODE = re.compile(r"^([ \t]*)(```|~~~).*?^\1\2[^\n]*$", re.MULTILINE | re.DOTALL)
+INLINE_CODE = re.compile(r"`[^`\n]*`")
 FRONTMATTER_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
 
 SEVERITY_ORDER = {"danger": 0, "warning": 1, "tip": 2, "info": 3}
@@ -107,7 +113,15 @@ class Note:
 
     @property
     def links(self) -> list[str]:
-        return [m.group(1).strip() for m in WIKILINK_RE.finditer(self.body)]
+        """Outgoing wikilinks, ignoring anything inside code.
+
+        Known limitation: four-space-indented code blocks are not recognised, because they are
+        indistinguishable from list continuation without a full Markdown parse. Put examples in a
+        fenced block or in backticks.
+        """
+        prose = FENCED_CODE.sub("", self.body)
+        prose = INLINE_CODE.sub("", prose)
+        return [m.group(1).strip() for m in WIKILINK_RE.finditer(prose)]
 
 
 class Vault:

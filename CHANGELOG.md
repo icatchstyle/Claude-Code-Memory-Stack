@@ -20,6 +20,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Dependabot version updates for GitHub Actions and the reference server's Python dependencies,
   grouped into one pull request per ecosystem and scheduled monthly.
 
+### Fixed
+
+- Wikilink extraction now ignores fenced and inline code, so a note documenting link syntax no
+  longer produces phantom broken links. Any vault that describes its own conventions hits this.
+- The vault health assertions live in one script used by both `make vault` and CI. They had
+  drifted apart — the Makefile checked three rules, CI four — so a change could pass locally and
+  fail in the pipeline, breaking the guarantee CONTRIBUTING.md makes.
+
 ## [0.1.0] — 2026-09-01
 
 First public release.

@@ -46,15 +46,9 @@ cd mcp/vault-mcp && pytest tests/ -v
 find . -name '*.sh' -exec bash -n {} \;
 shellcheck --severity=warning $(find . -name '*.sh')
 
-# the vault template must pass its own health check
-python -c "
-import sys; sys.path.insert(0,'mcp/vault-mcp/src')
-from vault_mcp.vault import Vault
-v = Vault('vault-template'); v.reindex()
-h = v.health()
-assert not h['gotchas_without_callout'], h['gotchas_without_callout']
-assert not h['folders_without_index'], h['folders_without_index']
-print('ok')"
+# documentation links, and the vault template's own health check
+python3 .github/scripts/check-links.py
+python3 .github/scripts/check-vault.py
 ```
 
 `make check` runs exactly what CI runs, so a green one predicts the other. CI additionally

@@ -153,3 +153,19 @@ def test_gotcha_check_ignores_templates(vault, tmp_path):
     vault.reindex()
     sources = [h["source"] for h in vault.gotcha_check("docker")]
     assert not any(s.startswith("TEMPLATES/") for s in sources)
+
+
+def test_links_inside_code_are_not_counted(vault, tmp_path):
+    # A vault documents its own conventions, so wikilink syntax shows up as an example in prose.
+    # Counting those produces phantom broken links that nothing in the note explains.
+    (tmp_path / "GUIDELINES.md").write_text(
+        "---\ntitle: Conventions\n---\n\n"
+        "# Conventions\n\n"
+        "Write `[[inline/example|alias]]` for a link.\n\n"
+        "```markdown\n[[fenced/example]]\n```\n\n"
+        "A real one: [[HOME|Home]]\n",
+        encoding="utf-8",
+    )
+    vault.reindex()
+    links = vault.notes["GUIDELINES.md"].links
+    assert links == ["HOME"]
