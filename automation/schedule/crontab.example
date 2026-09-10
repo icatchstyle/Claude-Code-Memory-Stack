@@ -8,7 +8,12 @@
 PATH=/usr/local/bin:/usr/bin:/bin:/home/YOUR_USER/.local/bin
 
 # m  h  dom mon dow  command
-  20 7  *   *   *    /path/to/automation/run.sh >>/tmp/knowledge-miner.log 2>&1
+  20 7  *   *   *    /usr/bin/python3 /path/to/automation/run.py >>/tmp/knowledge-miner.log 2>&1
 
 # Deliberately WITHOUT --write: this runs in dry run. Read the digests it collects for a week
 # before adding --write and letting an unattended agent write to your notes.
+#
+# A cron job that starts every morning and fails every morning looks exactly like one that
+# works: same schedule, same silence. Check what the runs actually did, not that they ran:
+#
+#   /usr/bin/python3 /path/to/automation/run.py --status

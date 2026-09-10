@@ -9,6 +9,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`automation/run.py`** — the harvest runner, rewritten in Python and standard library only,
+  so it runs the same way on Linux, macOS and Windows. The part of the stack that runs while
+  nobody is watching should not depend on a shell being installed. `run.sh` is kept as a thin
+  wrapper for existing schedules.
+- **A login check as a safety rail of its own**, before the harvest and never retried. An
+  expired login is the failure that hides best: the job starts on time, the collector does its
+  work, and the agent call dies in seconds behind a log line that reads like a detail. Checked
+  up front so the log names the cause, and not retried, because a second attempt fails
+  identically and buries it.
+- **`run.py --status`** — why the last run ended, how many runs failed in a row, and how wide
+  the window has grown while they did. A scheduler can only report that it started a process;
+  this answers whether the harvest happened. Exits non-zero while runs are failing.
+- **The result marker must start a line.** Matching `MINER_RESULT` anywhere in the reply also
+  matches the agent quoting its own instructions back before dying, which reads as a completed
+  run in a log full of failures.
+
 - **`automation/`** — the scheduled harvest that closes the write-back loop without relying on
   discipline: a collector turning past sessions into digests, a runner that is dry-run by default,
   and schedule examples for cron, launchd and Task Scheduler. It deliberately extracts what a
@@ -31,6 +47,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - GitHub Actions updated to `checkout@v7` and `setup-python@v7`.
 - Dependabot version updates for GitHub Actions and the reference server's Python dependencies,
   grouped into one pull request per ecosystem and scheduled monthly.
+
+### Changed
+
+- **The Windows schedule no longer requires WSL.** `schedule/register-task.ps1` registers a
+  native Python run through the `py` launcher and takes `-UseWsl` for setups where the knowledge
+  base lives inside WSL. The cron and launchd examples call `run.py` directly, and both now show
+  how to ask the runner whether the runs are actually succeeding.
+- **`make harvest-dry`** calls `run.py`; **`make harvest-status`** is new.
 
 ### Fixed
 

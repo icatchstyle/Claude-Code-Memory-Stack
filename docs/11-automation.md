@@ -5,7 +5,7 @@ or it is not. Retrieval is mandatory or it is advisory, and if it is advisory it
 
 The write-back loop is the exception, and that is why it is the part that fails.
 
-**In this chapter:** [Why this needs automating](#why-this-needs-automating) · [What a machine collects that you never would](#what-a-machine-collects-that-you-never-would) · [The safety rails](#the-safety-rails) · [The cut marker](#the-cut-marker) · [What will break](#what-will-break) · [Running it](#running-it)
+**In this chapter:** [Why this needs automating](#why-this-needs-automating) · [What a machine collects that you never would](#what-a-machine-collects-that-you-never-would) · [The safety rails](#the-safety-rails) · [Proving the run happened](#proving-the-run-happened) · [The cut marker](#the-cut-marker) · [What will break](#what-will-break) · [Running it](#running-it)
 
 ## Why this needs automating
 
@@ -49,7 +49,7 @@ filing it as if it were is how a vault fills with plausible noise.
 
 ## The safety rails
 
-This points an unsupervised agent at your knowledge base with write access. Four rails, in order
+This points an unsupervised agent at your knowledge base with write access. Five rails, in order
 of how much they matter.
 
 ### 1. State advances only on success
@@ -71,11 +71,30 @@ makes them **invisible to retrieval** (chapter 2), and you discover it at the ne
 dozens exist. A run that writes nothing is recoverable in a minute; a run that writes eighty
 malformed notes is an afternoon.
 
-### 3. One run at a time
+### 3. The run must be able to authenticate
+
+Checked with a trivial prompt before the harvest, and never retried.
+
+An expired login is the failure this chapter would otherwise not survive, because it is the one
+that looks like nothing. The scheduler starts the job on time. The collector runs, finds its
+sessions, writes its digests. Then the agent call dies in about three seconds, and the log ends
+with a line that reads like an authentication detail rather than an outage. Tomorrow the same
+thing happens, and the day after.
+
+Two decisions follow from that:
+
+- **Fail before the work, not during it.** The check is a separate call with its own error, so
+  the log says *the login expired* rather than *the write procedure did not load* — which is what
+  an auth failure looks like when the convention probe is the first thing to touch the network.
+- **Never retry an auth failure.** A second attempt fails identically within seconds and pushes
+  the real cause further up the log. A retry loop is for flaky things; a missing credential is
+  not flaky.
+
+### 4. One run at a time
 
 An atomic lock, with a staleness window so a crashed run does not block tomorrow forever.
 
-### 4. Version-control the vault
+### 5. Version-control the vault
 
 The script cannot enforce this, so the chapter says it instead: **put the vault in git before you
 enable writing.** Not as a backup. As a review mechanism — `git diff` is how you read what an
@@ -83,6 +102,41 @@ agent wrote while you slept, and the only realistic way to catch it drifting.
 
 Start in dry run. Stay there a week. Read the digests it collects and the reports it would have
 acted on. Only then add `--write`.
+
+## Proving the run happened
+
+A scheduler tells you that it started a process. That is all it tells you.
+
+Every scheduler surface — last run time, next run time, exit code, "missed runs: 0" — describes
+the wrapper, not the work. A harvest that authenticates, collects nothing usable and dies looks
+identical to one that filed nine gotchas, and both look identical to a run that wrote eighty
+malformed notes. So the runner keeps its own account, and you read that instead:
+
+```bash
+python3 automation/run.py --status
+```
+
+```
+cursor (window starts here) : 2024-05-06T07:08:09Z
+last attempt                : 2024-05-20T07:20:03Z
+last successful harvest     : 2024-05-06T07:20:01Z
+status                      : auth_failed
+consecutive failures        : 12 (since 2024-05-07T07:20:02Z)
+```
+
+Three things in that output do work no scheduler does:
+
+- **`status`** is why the run ended, in the runner's own words: `ok`, `ok_empty`,
+  `collector_failed`, `auth_failed`, `failed`.
+- **`consecutive_failures`** turns a series into one fact. A single failure is bad luck; twelve
+  in a row is a broken system, and the difference is invisible if you only ever see the newest
+  log.
+- **The gap between `last attempt` and `last successful harvest`** is the window that is still
+  waiting to be collected. It grows every day the job fails, which is also why the next
+  successful run announces itself as a catch-up.
+
+`--status` exits non-zero while runs are failing, so it composes into whatever already watches
+your machine, without needing to parse a log.
 
 ## The cut marker
 
@@ -124,13 +178,22 @@ depends on something outside its control, and it is worth knowing that going in.
 
 ```bash
 cd automation
-./run.sh                                 # dry run — the default
+python3 run.py                           # dry run — the default
 ls ~/.claude/knowledge-miner/staging/    # read what it would hand over
-./run.sh --write                         # once you trust it
+python3 run.py --write                   # once you trust it
+python3 run.py --status                  # what the last runs actually did
 ```
 
+The runner is Python and standard library only, so it runs the same way on Linux, macOS and
+Windows. That is not tidiness: this is the one part of the stack that runs while nobody is
+watching, and a harvest that depends on a shell being installed silently stops existing on the
+machine that does not have one. `run.sh` is kept as a thin wrapper for crontabs and Makefile
+targets that already point at it.
+
 Scheduling examples for cron, launchd and Windows Task Scheduler are in
-[`automation/schedule/`](../automation/schedule/). All three start **without** `--write`.
+[`automation/schedule/`](../automation/schedule/). All three start **without** `--write`. The
+Task Scheduler script registers a native Python run by default and takes `-UseWsl` for setups
+where the knowledge base lives inside WSL.
 
 ## Where this sits in the stack
 

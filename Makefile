@@ -45,7 +45,11 @@ check: test links shell vault ## Run everything CI runs
 
 .PHONY: harvest-dry
 harvest-dry: ## Collect session digests without writing anything
-	./automation/run.sh
+	python3 automation/run.py
+
+.PHONY: harvest-status
+harvest-status: ## Ask the runner what the last scheduled runs actually did
+	python3 automation/run.py --status
 
 .PHONY: demo
 demo: ## Lay the stack down in a throwaway location and show what it produces

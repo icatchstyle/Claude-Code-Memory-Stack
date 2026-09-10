@@ -16,16 +16,27 @@ run it.
 ## Quick start
 
 ```bash
-./run.sh                          # dry run: collect and report, write nothing
-ls ~/.claude/knowledge-miner/staging/    # read what it would have handed over
+python3 run.py                          # dry run: collect and report, write nothing
+ls ~/.claude/knowledge-miner/staging/   # read what it would have handed over
 
-./run.sh --write                  # once you trust it
-./run.sh --write --since-days 7   # catch up after a gap
+python3 run.py --write                  # once you trust it
+python3 run.py --write --since-days 7   # catch up after a gap
+python3 run.py --status                 # what the last runs actually did
 ```
 
 Then schedule it — examples for [cron](schedule/crontab.example),
 [launchd](schedule/com.example.knowledge-miner.plist) and
 [Task Scheduler](schedule/register-task.ps1).
+
+## Requirements
+
+Python 3.10 or newer and the `claude` CLI on `PATH`. Nothing else: the runner and the collector
+are standard library only, so the same two files work on Linux, macOS and Windows.
+
+The runner is Python rather than shell for one reason. It runs unattended, which means the
+machine it runs on is whatever machine you happen to have, and a harvest that needs a POSIX
+shell simply does not exist on a Windows box without WSL. `run.sh` is a thin wrapper so
+existing crontabs and `make harvest-dry` keep working.
 
 ## What it collects
 
@@ -51,8 +62,18 @@ the conventions and confirm; if that probe fails, it refuses to continue. An una
 that cannot read the conventions invents its own — consistently, across every note it files, and
 you find out at the next lint after dozens exist.
 
+**The run must be able to authenticate.** Checked with a trivial prompt before the harvest, and
+never retried. An expired login is the failure that hides best: the job starts on time, the
+collector does its work, and the agent call dies in three seconds behind a log line that looks
+like a detail. A second attempt fails the same way and buries the cause, so there is no retry.
+
 **One run at a time.** An atomic lock, with a two-hour staleness window so a crashed run does not
 block the next day forever.
+
+**The result marker must start a line.** A run counts as complete only when the agent's reply
+carries `MINER_RESULT` at the beginning of a line. Matching it anywhere in the text also matches
+the agent quoting its own instructions back before dying — which reads as a finished harvest in
+a log full of failures, for as long as nobody looks closely.
 
 **A cut marker, so nothing is harvested twice.** A session already handled carries a marker; the
 collector starts after the latest one. Re-harvesting is how duplicates get created, and duplicates
@@ -63,9 +84,21 @@ are the one defect a knowledge base does not recover from on its own.
 | File | Purpose |
 |---|---|
 | `collect_sessions.py` | Transcripts → digests. Contains the one format-dependent function. |
-| `run.sh` | The runner: window, collection, probe, harvest, state. |
+| `run.py` | The runner: window, collection, login check, probe, harvest, state. Portable. |
+| `run.sh` | Thin wrapper around `run.py`, for schedules that already point at it. |
 | `schedule/` | cron, launchd and Task Scheduler examples |
-| `tests/` | Fixture tests for the parsing and the cut marker |
+| `tests/` | Fixture tests for the parsing and the cut marker, unit tests for the runner |
+
+## Did it actually run?
+
+```bash
+python3 run.py --status
+```
+
+A scheduler reports that it started a process; it cannot report whether the harvest happened.
+`--status` answers the question the scheduler cannot: why the last run ended, how many runs have
+failed in a row, and how wide the window has grown while they did. It exits non-zero while runs
+are failing, so it drops into whatever already watches the machine.
 
 ## The part that will break
 
