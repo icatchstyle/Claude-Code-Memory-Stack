@@ -38,6 +38,12 @@ machine it runs on is whatever machine you happen to have, and a harvest that ne
 shell simply does not exist on a Windows box without WSL. `run.sh` is a thin wrapper so
 existing crontabs and `make harvest-dry` keep working.
 
+CI runs the harvest on ubuntu, macOS and Windows, and every step of that job is written in
+Python rather than bash — a bash step would lean on the Git Bash that GitHub's Windows image
+ships and would prove the opposite. The same job carries a non-ASCII transcript through the
+collector, because the platform default encoding on Windows is cp1252 and an ASCII-only
+fixture passes under any codec.
+
 ## What it collects
 
 Three things a human never reports, because they happen in passing:

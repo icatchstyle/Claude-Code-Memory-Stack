@@ -21,6 +21,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`run.py --status`** — why the last run ended, how many runs failed in a row, and how wide
   the window has grown while they did. A scheduler can only report that it started a process;
   this answers whether the harvest happened. Exits non-zero while runs are failing.
+- **A `portability` CI job** running the harvest on ubuntu, macOS and Windows. Every step in it
+  is written in `shell: python`, not bash — a bash step would quietly rely on the Git Bash that
+  GitHub's Windows image happens to ship and would prove the opposite of what the job claims. It
+  checks that the dry run is still the default, that `--status` reports a failure series and exits
+  non-zero, and that a missing CLI fails the run without advancing the cursor.
+- **A non-ASCII fixture** (`session-unicode.jsonl`). The other fixtures are pure ASCII and would
+  pass under any codec, so they cannot catch a reader that relies on the platform default — which
+  on Windows is cp1252, where these bytes raise `UnicodeDecodeError`.
+- **`MINER_CLI`** overrides the CLI lookup, for an install outside `PATH` and so a test can force
+  the "no CLI" path deterministically. Forcing it through `PATH` is both platform-dependent and
+  unsafe: on a machine that does have the CLI, such a test starts a real unattended run with
+  write access.
 - **The result marker must start a line.** Matching `MINER_RESULT` anywhere in the reply also
   matches the agent quoting its own instructions back before dying, which reads as a completed
   run in a log full of failures.

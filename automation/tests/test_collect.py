@@ -130,6 +130,24 @@ def test_render_puts_tool_errors_first(sample_path=FIXTURES / "session-sample.js
     assert "**Bash**" in text
 
 
+# --------------------------------------------------------------- encoding
+
+def test_non_ascii_transcripts_survive_the_platform_default_encoding():
+    """Read a transcript that is genuinely multi-byte UTF-8 on disk.
+
+    Not a formality: Python's default encoding follows the platform, and on Windows that is
+    cp1252, where these bytes raise UnicodeDecodeError. Every reader here passes an explicit
+    encoding, and this fixture is what keeps it that way — the other fixtures are pure ASCII
+    and would pass under any codec.
+    """
+    session = collect(FIXTURES / "session-unicode.jsonl", EPOCH)
+    text = render(session)
+    assert "Zeitzone" in text
+    assert "Europe/Zürich" in text          # the umlaut arrived intact, not as a replacement char
+    assert "\ufffd" not in text
+    assert "interne Überlegung" not in text  # thinking blocks stay out, in any encoding
+
+
 def test_a_truncated_final_line_is_survivable(tmp_path):
     path = tmp_path / "partial.jsonl"
     path.write_text(

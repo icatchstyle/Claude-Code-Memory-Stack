@@ -17,6 +17,7 @@ import pytest  # noqa: E402
 
 from run import (  # noqa: E402
     catch_up_note,
+    find_cli,
     find_result_marker,
     is_auth_failure,
     parse_counts,
@@ -169,3 +170,19 @@ def test_a_stale_lock_is_taken_over(tmp_path):
     os.utime(lock, (old, old))
     # A crashed run must not block every following day forever.
     assert take_lock(lock) is True
+
+
+# ------------------------------------------------------- locating the CLI
+
+def test_miner_cli_overrides_the_path_lookup(tmp_path, monkeypatch):
+    fake = tmp_path / "agent"
+    fake.write_text("", encoding="utf-8")
+    monkeypatch.setenv("MINER_CLI", str(fake))
+    assert find_cli() == str(fake)
+
+
+def test_miner_cli_pointing_at_nothing_reports_no_cli(tmp_path, monkeypatch):
+    # This is how a test forces the "no CLI" path. Doing it through PATH would find the real
+    # CLI on a developer machine and start an actual unattended run with write access.
+    monkeypatch.setenv("MINER_CLI", str(tmp_path / "absent"))
+    assert find_cli() is None

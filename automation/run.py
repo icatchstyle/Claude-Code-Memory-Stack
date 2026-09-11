@@ -35,6 +35,7 @@ Environment:
   MINER_STATE_DIR        where state, staging and logs live (default: ~/.claude/knowledge-miner)
   MINER_CONFIG_DIR       a separate CLAUDE_CONFIG_DIR for the run, if you keep one for jobs
   MINER_SKILL            the skill to invoke (default: capture-knowledge)
+  MINER_CLI              full path to the agent CLI, if it is not on PATH
 """
 
 from __future__ import annotations
@@ -175,7 +176,14 @@ def take_lock(lock: Path) -> bool:
 
 def find_cli() -> str | None:
     """Locate the agent CLI. On Windows the executable is a .cmd shim, which needs the
-    PATHEXT lookup that shutil.which does and a bare name in subprocess does not."""
+    PATHEXT lookup that shutil.which does and a bare name in subprocess does not.
+
+    MINER_CLI overrides the lookup, for an install outside PATH and for tests that need the
+    "no CLI" path deterministically — forcing that through PATH would find the real CLI on a
+    developer machine and start an actual unattended run.
+    """
+    if override := os.environ.get("MINER_CLI"):
+        return override if Path(override).exists() else None
     for name in ("claude", "claude.cmd", "claude.exe"):
         if found := shutil.which(name):
             return found
