@@ -11,6 +11,9 @@
 
   Replace YOUR_USER and the path. Note there is no --write below: start in dry-run and add it
   once you trust what the digests contain.
+
+  A loaded agent that runs on time proves nothing about the harvest itself. Ask the runner:
+      python3 /Users/YOUR_USER/path/to/automation/run.py --status
 -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -21,7 +24,8 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/YOUR_USER/path/to/automation/run.sh</string>
+        <string>/usr/bin/python3</string>
+        <string>/Users/YOUR_USER/path/to/automation/run.py</string>
     </array>
 
     <key>StartCalendarInterval</key>

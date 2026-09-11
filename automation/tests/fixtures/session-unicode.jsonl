@@ -1,0 +1,6 @@
+{"type": "user", "timestamp": "2026-09-01T09:00:00Z", "cwd": "/work/app", "gitBranch": "main", "message": {"content": "Der nächtliche Lauf schlägt fehl — prüf bitte die Zeitzone"}}
+{"type": "assistant", "timestamp": "2026-09-01T09:00:10Z", "message": {"content": [{"type": "thinking", "text": "interne Überlegung, die nie im Digest landen darf"}, {"type": "tool_use", "id": "t1", "name": "Bash", "input": {"command": "TZ=Europe/Zürich date"}}]}}
+{"type": "user", "timestamp": "2026-09-01T09:00:12Z", "message": {"content": [{"type": "tool_result", "tool_use_id": "t1", "is_error": true, "content": "Fehler: unbekannte Zeitzone „Europe/Zürich“ — Umlaut im Namen ✗"}]}}
+{"type": "assistant", "timestamp": "2026-09-01T09:00:20Z", "message": {"content": [{"type": "text", "text": "Die Zonen-Datenbank kennt nur „Europe/Zurich“ ohne Umlaut. ✔ Behoben."}]}}
+{"type": "assistant", "timestamp": "2026-09-01T09:01:00Z", "isSidechain": true, "message": {"content": [{"type": "text", "text": "Die Übersicht liegt in docs/zeitzonen.md, Abschnitt „Fallstricke“."}]}}
+{"type": "ai-title", "aiTitle": "Zeitzonen-Fehler im Nachtlauf", "sessionId": "unicode"}

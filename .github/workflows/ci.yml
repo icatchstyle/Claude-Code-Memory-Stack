@@ -47,6 +47,105 @@ jobs:
         working-directory: automation
         run: pytest tests/ -v
 
+  portability:
+    name: Harvest runs on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      # The runner's own unit tests, on every platform. The lock, the atomic cursor write and
+      # the state file are the parts whose behaviour is platform-dependent, so running them
+      # only on Linux would test the interesting half nowhere.
+      - name: Run tests — automation
+        working-directory: automation
+        run: pytest tests/ -v
+
+      # Every step below uses `shell: python`, not bash. The claim this job exists to check is
+      # that the harvest needs no POSIX shell — a step written in bash would quietly rely on
+      # the Git Bash that GitHub's Windows image happens to ship, and prove the opposite.
+      - name: Dry run is the default, on this platform
+        shell: python
+        run: |
+          import json, os, shutil, subprocess, sys
+          from pathlib import Path
+
+          root = Path.cwd()
+          state = root / "ci-state"
+          projects = root / "ci-projects" / "sample"
+          projects.mkdir(parents=True)
+          shutil.copy(root / "automation/tests/fixtures/session-unicode.jsonl",
+                      projects / "session.jsonl")
+
+          env = {**os.environ, "MINER_STATE_DIR": str(state),
+                 "MINER_PROJECTS_DIR": str(root / "ci-projects")}
+          run = subprocess.run([sys.executable, "automation/run.py", "--since-days", "100000"],
+                               capture_output=True, text=True, encoding="utf-8", env=env)
+          print(run.stdout, run.stderr)
+          assert run.returncode == 0, f"runner exited {run.returncode}"
+          assert "DRY RUN" in run.stdout, "the default is not a dry run"
+          assert not (state / "last-run").exists(), "a dry run advanced the cursor"
+
+          digests = list((state / "staging").glob("*.md"))
+          assert digests, "no digest was written"
+          # The digest must carry the umlaut through, on a platform whose default codec cannot.
+          text = digests[0].read_text(encoding="utf-8")
+          assert "Europe/Z\u00fcrich" in text, "non-ASCII content did not survive"
+          print(f"{len(digests)} digest(s), non-ASCII intact")
+
+      - name: Status reports a failure series and exits non-zero
+        shell: python
+        run: |
+          import json, os, subprocess, sys
+          from pathlib import Path
+
+          state = Path.cwd() / "ci-state"
+          # A run that never happened must not look healthy: write a failed attempt the way the
+          # runner does, then let --status speak for it.
+          (state / "state.json").write_text(json.dumps(
+              {"status": "auth_failed", "last_attempt": "2024-01-01T00:00:00Z",
+               "consecutive_failures": 3, "failing_since": "2024-01-01T00:00:00Z"}),
+              encoding="utf-8")
+          env = {**os.environ, "MINER_STATE_DIR": str(state)}
+          run = subprocess.run([sys.executable, "automation/run.py", "--status"],
+                               capture_output=True, text=True, encoding="utf-8", env=env)
+          print(run.stdout, run.stderr)
+          assert run.returncode == 1, "--status must exit non-zero while runs are failing"
+          assert "consecutive failures" in run.stdout
+          assert "auth_failed" in run.stdout
+
+      - name: The runner refuses to write without a CLI, and keeps the cursor
+        shell: python
+        run: |
+          import os, subprocess, sys
+          from pathlib import Path
+
+          root = Path.cwd()
+          state = root / "ci-state-2"
+          # MINER_CLI points at nothing on purpose. Forcing this through PATH would be both
+          # platform-dependent and dangerous: on a machine that does have the CLI, the step
+          # would start a real unattended run with write access.
+          env = {**os.environ, "MINER_STATE_DIR": str(state),
+                 "MINER_PROJECTS_DIR": str(root / "ci-projects"),
+                 "MINER_CLI": str(root / "no-such-cli")}
+          run = subprocess.run([sys.executable, "automation/run.py", "--since-days", "100000",
+                                "--write"], capture_output=True, text=True, encoding="utf-8",
+                               env=env)
+          print(run.stdout, run.stderr)
+          assert run.returncode == 1, "a missing CLI must fail the run"
+          assert "not on PATH" in run.stdout
+          assert not (state / "last-run").exists(), "the cursor advanced despite a failure"
+
   package:
     name: Package builds and imports
     runs-on: ubuntu-latest
